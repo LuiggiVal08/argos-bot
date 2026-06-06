@@ -103,8 +103,10 @@ export const init_data_engine = tool({
 
         const envExample =
             '# Data Engine (NestJS) - copy to .env, do not commit\n' +
+            '# Broker is any RESP-compatible implementation:\n' +
+            '#   Redis 7+ / Memurai (Windows) / Dragonfly / Valkey / KeyDB / Garnet / Redict\n' +
+            'ARGOS_BROKER_URL=redis://localhost:6379\n' +
             'ENVIRONMENT_MODE=PAPER_TRADING\n' +
-            'REDIS_URL=redis://redis:6379\n' +
             'EXCHANGE_WS_URL=wss://stream.binance.com:9443/ws\n' +
             'SYMBOL=BTC/USDT\n' +
             'TIMEFRAME=1m\n';
@@ -112,18 +114,19 @@ export const init_data_engine = tool({
         const mainTs =
             'import "reflect-metadata"\n' +
             'import { NestFactory } from "@nestjs/core"\n' +
-            'import { MicroserviceOptions, Transport } from "@nestjs/microservices"\n' +
             'import { AppModule } from "./app.module"\n' +
             '\n' +
-            'async function bootstrap() {\n' +
-            '  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {\n' +
-            '    transport: Transport.REDIS,\n' +
-            '    options: { url: process.env.REDIS_URL ?? "redis://localhost:6379" },\n' +
-            '  })\n' +
-            '  await app.listen()\n' +
-            '  console.log("[data-engine] listening on redis stream")\n' +
+            'async function bootstrap(): Promise<void> {\n' +
+            '  const app = await NestFactory.create(AppModule)\n' +
+            '  await app.listen(3000)\n' +
+            '  // eslint-disable-next-line no-console\n' +
+            '  console.log("[data-engine] listening on :3000")\n' +
             '}\n' +
-            'bootstrap()\n';
+            'bootstrap().catch((err) => {\n' +
+            '  // eslint-disable-next-line no-console\n' +
+            '  console.error("[data-engine] fatal init error", err)\n' +
+            '  process.exit(1)\n' +
+            '})\n';
 
         const appModuleTs =
             'import { Module } from "@nestjs/common"\n' + '\n' + '@Module({})\n' + 'export class AppModule {}\n';
@@ -199,8 +202,10 @@ export const init_analytics_engine = tool({
 
         const envExample =
             '# Analytics Engine (FastAPI) - copy to .env, do not commit\n' +
+            '# Broker is any RESP-compatible implementation:\n' +
+            '#   Redis 7+ / Memurai (Windows) / Dragonfly / Valkey / KeyDB / Garnet / Redict\n' +
+            'ARGOS_BROKER_URL=redis://localhost:6379\n' +
             'ENVIRONMENT_MODE=PAPER_TRADING\n' +
-            'REDIS_URL=redis://redis:6379\n' +
             'RISK_PCT=0.01\n' +
             'DRAWDOWN_PCT=0.05\n' +
             'EXCHANGE_API_KEY=\n' +
@@ -267,7 +272,7 @@ export const init_analytics_engine = tool({
 
 export const init_compose = tool({
     description:
-        'Generate docker-compose.yml with data-engine, analytics-engine, and redis:7-alpine, including healthchecks, isolated network, named volume for redis, and inline comments for extension. Idempotent.',
+        'Generate docker-compose.yml with data-engine, analytics-engine, and a RESP-compatible broker (defaults to redis:7-alpine; can be swapped for memurai, valkey, dragonfly, etc. via the `broker` service override). Includes healthchecks, isolated network, named volume. Docker is ONE deployment option — bare-metal is also supported. Idempotent.',
     args: {},
     async execute() {
         const file = path.join(ROOT, 'docker-compose.yml');
@@ -280,23 +285,29 @@ export const init_compose = tool({
         const compose =
             '# Argos bot - production-grade trading bot stack\n' +
             '# Spec: spec.md sections 1 and 4 (OWASP 4-phase incident response)\n' +
+            '#\n' +
+            '# Broker is pluggable. Default uses redis:7-alpine. To use another\n' +
+            '# RESP-compatible broker (memurai, valkey, dragonfly, keydb, ...),\n' +
+            '# override the `broker` service: change `image:` to your image and\n' +
+            '# adjust the healthcheck. Application code reads ARGOS_BROKER_URL\n' +
+            '# and is broker-agnostic.\n' +
             'services:\n' +
             '  data-engine:\n' +
             '    build: ./apps/data-engine\n' +
             '    container_name: argos-data-engine\n' +
             '    environment:\n' +
             '      - ENVIRONMENT_MODE=${ENVIRONMENT_MODE:-PAPER_TRADING}\n' +
-            '      - REDIS_URL=redis://redis:6379\n' +
+            '      - ARGOS_BROKER_URL=redis://broker:6379\n' +
             '      - EXCHANGE_WS_URL=${EXCHANGE_WS_URL:-wss://stream.binance.com:9443/ws}\n' +
             '    env_file:\n' +
             '      - .env\n' +
             '    depends_on:\n' +
-            '      redis:\n' +
+            '      broker:\n' +
             '        condition: service_healthy\n' +
             '    networks: [argos-net]\n' +
             '    restart: unless-stopped\n' +
             '    healthcheck:\n' +
-            '      test: ["CMD", "node", "-e", "process.exit(0)"]\n' +
+            '      test: ["CMD", "node", "-e", "require(\'http\').get(\'http://localhost:3000/health\', r => process.exit(r.statusCode === 200 ? 0 : 1)).on(\'error\', () => process.exit(1))"]\n' +
             '      interval: 30s\n' +
             '      timeout: 5s\n' +
             '      retries: 3\n' +
@@ -310,13 +321,13 @@ export const init_compose = tool({
             '    container_name: argos-analytics-engine\n' +
             '    environment:\n' +
             '      - ENVIRONMENT_MODE=${ENVIRONMENT_MODE:-PAPER_TRADING}\n' +
-            '      - REDIS_URL=redis://redis:6379\n' +
+            '      - ARGOS_BROKER_URL=redis://broker:6379\n' +
             '      - RISK_PCT=${RISK_PCT:-0.01}\n' +
             '      - DRAWDOWN_PCT=${DRAWDOWN_PCT:-0.05}\n' +
             '    env_file:\n' +
             '      - .env\n' +
             '    depends_on:\n' +
-            '      redis:\n' +
+            '      broker:\n' +
             '        condition: service_healthy\n' +
             '    networks: [argos-net]\n' +
             '    restart: unless-stopped\n' +
@@ -330,13 +341,16 @@ export const init_compose = tool({
             '      driver: json-file\n' +
             '      options: { max-size: "10m", max-file: "3" }\n' +
             '\n' +
-            '  redis:\n' +
+            '  # RESP-compatible broker. Swap image to use another implementation.\n' +
+            '  # Examples: redis:7-alpine | valkey/valkey:7-alpine | dhrdldh3/dragonfly |\n' +
+            '  #           eqalpha/keydb | ghcr.io/microsoft/garnet\n' +
+            '  broker:\n' +
             '    image: redis:7-alpine\n' +
-            '    container_name: argos-redis\n' +
+            '    container_name: argos-broker\n' +
             '    command: ["redis-server", "--appendonly", "yes"]\n' +
             '    networks: [argos-net]\n' +
             '    volumes:\n' +
-            '      - redis-data:/data\n' +
+            '      - broker-data:/data\n' +
             '    restart: unless-stopped\n' +
             '    healthcheck:\n' +
             '      test: ["CMD", "redis-cli", "ping"]\n' +
@@ -350,7 +364,7 @@ export const init_compose = tool({
             '    driver: bridge\n' +
             '\n' +
             'volumes:\n' +
-            '  redis-data:\n';
+            '  broker-data:\n';
 
         writeFileSync(file, compose);
         return {
@@ -362,7 +376,7 @@ export const init_compose = tool({
 
 export const init_git = tool({
     description:
-        'Initialize a git repository and write a comprehensive .gitignore (node_modules, __pycache__, .env, .venv, dist, .opencode/cache, etc). Idempotent.',
+        'Initialize a git repository and write a comprehensive .gitignore (node_modules, __pycache__, .env, .venv, dist, .opencode/cache, secrets, IDE artefacts). Idempotent. Pre-requisite for AGENTS.md §12 Git workflow.',
     args: {},
     async execute(_args, ctx) {
         const gitDir = path.join(ROOT, '.git');
@@ -432,7 +446,7 @@ export const init_git = tool({
 
 export const init_config = tool({
     description:
-        'Generate config.json at the project root with sensible defaults from spec.md (risk_pct=0.01, drawdown_pct=0.05, ENVIRONMENT_MODE=PAPER_TRADING). Idempotent.',
+        'Generate config.json at the project root with sensible defaults from spec.md. Schema is broker-agnostic: `broker.kind` selects the protocol family (default "redis-protocol" covers Redis, Memurai, Dragonfly, Valkey, etc.). Idempotent.',
     args: {},
     async execute() {
         const file = path.join(ROOT, 'config.json');
@@ -446,14 +460,20 @@ export const init_config = tool({
             environment_mode: 'PAPER_TRADING',
             risk_pct: 0.01,
             drawdown_pct: 0.05,
-            max_open_positions: 3,
-            exchanges: [],
-            strategies: [],
-            streams: {
-                ticks: 'ticks:btcusdt',
-                signals: 'signals:btcusdt',
-                orders: 'orders:btcusdt',
+            broker: {
+                kind: 'redis-protocol',
+                url: '${ARGOS_BROKER_URL}',
+                stream_prefix: 'ticks:',
             },
+            exchanges: [
+                {
+                    id: 'binance',
+                    type: 'perpetual_futures',
+                    testnet: true,
+                },
+            ],
+            symbols: ['BTC/USDT'],
+            timeframes: ['1m', '5m', '15m', '1h', '4h', '1d'],
         };
         writeFileSync(file, JSON.stringify(cfg, null, 2) + '\n');
         return { title: 'init_config', output: 'Created: config.json' };

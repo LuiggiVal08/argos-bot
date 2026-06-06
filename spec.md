@@ -5,7 +5,14 @@
 
 ## 1. Arquitectura del Sistema e Infraestructura
 
-El sistema se diseña bajo una arquitectura de microservicios orientada a eventos, completamente contenerizada mediante Docker, aislando el procesamiento de alta concurrencia I/O del cómputo intensivo de datos, la IA y el motor de riesgo coercitivo.
+El sistema se diseña bajo una arquitectura de microservicios orientada a eventos, **agnóstica al modelo de deployment** (contenedores Docker, bare metal en Linux/WSL2/macOS/Windows nativo son todos soportados de primera clase), aislando el procesamiento de alta concurrencia I/O del cómputo intensivo de datos, la IA y el motor de riesgo coercitivo.
+
+### 1.0 Principios de Agnosticismo de Infraestructura
+
+* **Agnosticismo de broker:** el código de aplicación no se acopla a un broker específico. Usa un `MessageBus` port (interface). El adapter concreto (`RedisProtocolBus` u otro) implementa contra cualquier broker compatible con el protocolo RESP. Esto cubre: Redis 7+, Memurai, Dragonfly, Valkey, KeyDB, Garnet, Redict. Cambiar de broker no requiere reescribir lógica de negocio.
+* **Agnosticismo de deployment:** `docker-compose.yml` es una de las opciones soportadas, no la única. El stack puede correr bare metal con `node` y `python` nativos, con cualquier broker RESP instalado a nivel de sistema operativo. La elección entre Docker y bare metal es operacional, no arquitectónica.
+* **Agnosticismo de OS:** paths via `path.join` (Node) / `os.path.join` (Python); entry points via `npm run` cross-platform; `.gitattributes` normaliza line endings; PowerShell provisto solo donde aporta valor real.
+* **Agnosticismo de exchange:** el adaptador de conectividad al exchange es un `ExchangeGateway` port. Cambiar de Binance a Bybit/OKX/etc. es swap de adapter, no reescritura de caso de uso.
 
 ### 1.1 Diagrama de Flujo de Datos e Infraestructura
 
@@ -49,7 +56,7 @@ El sistema se diseña bajo una arquitectura de microservicios orientada a evento
 | --- | --- | --- | --- | --- |
 | **Data Engine** | Node.js v20-alpine | **NestJS** (TypeScript) | `ws`, `ioredis`, `@nestjs/microservices` | Mantenimiento de conexiones persistentes con el Exchange. Código modularizado con inyección de dependencias y tipado estricto. |
 | **Analytics & IA Engine** | Python 3.11-slim | **FastAPI** + `asyncio` | `ta`, `pandas`, `numpy`, `tensorflow`/`pytorch` | Ingesta asíncrona, procesamiento del DataFrame y ejecución de modelos predictivos (LSTM/Transformers) sin bloquear hilos de cómputo. |
-| **Message Broker** | Redis 7-alpine | Redis Native | Redis Streams / Pub-Sub | Buffer inter-proceso ultrarrápido en memoria para mitigar picos de latencia. |
+| **Message Broker** | Cualquier implementación RESP-compatibile (Redis 7+, Memurai, Dragonfly, Valkey, KeyDB, Garnet, Redict) | RESP | Streams / Pub-Sub | Buffer inter-proceso ultrarrápido en memoria para mitigar picos de latencia. La elección del broker concreto es operacional, no arquitectónica: el código consume el `MessageBus` port. |
 | **Execution & Risk** | Python (Módulo Interno) | Integrado en FastAPI | `ccxt` (CryptoCurrency eXchange Trading) | Abstracción unificada para interactuar con múltiples exchanges, gestión de órdenes de mercado y reintentos. |
 | **Telemetría y UI** | *Por determinar* | *En revisión* | *Postergado* | **Última fase de desarrollo.** Se evaluará si se implementa mediante webhooks asíncronos o se integra un panel Frontend dedicado. |
 
@@ -112,12 +119,12 @@ El núcleo del Dominio evalúa el estado del DataFrame para conmutar la estrateg
 
 ## 4. Gestión de Seguridad y Protocolo ante Incidentes (OWASP)
 
-* **Protección de Datos:** Las credenciales de API y firmas privadas de los exchanges se inyectan en runtime como variables de entorno seguras en Docker (`.env`). Está estrictamente prohibido su almacenamiento en duro (*hardcode*) en el código fuente.
+* **Protección de Datos:** Las credenciales de API y firmas privadas de los exchanges se inyectan en runtime como variables de entorno seguras (`.env` o variables del sistema operativo en deployments bare metal). Está estrictamente prohibido su almacenamiento en duro (*hardcode*) en el código fuente.
 * **Estrategia de Reacción (4 Fases de OWASP):**
 1. **Identificación:** Monitoreo automatizado con logs estructurados (`winston` en NestJS / `logging` en FastAPI) para detectar anomalías de red o respuestas erróneas del exchange.
-2. **Contención:** Ante comportamientos inusuales, el bot cambia su estado de forma inmediata a pasivo, aislando los contenedores mediante reglas de red o revocando tokens de acceso.
+2. **Contención:** Ante comportamientos inusuales, el bot cambia su estado de forma inmediata a pasivo, aislando los procesos afectados mediante reglas de red o revocando tokens de acceso.
 3. **Erradicación:** Parcheo en caliente del adaptador de infraestructura afectado en el entorno de desarrollo y actualización automática de dependencias vulnerables.
-4. **Recuperación:** Despliegue seguro mediante `Docker healthchecks` reactivando las operaciones comerciales de manera escalonada.
+4. **Recuperación:** Despliegue seguro reactivando las operaciones comerciales de manera escalonada. Cuando el deployment es Docker, se aprovechan los `healthchecks` nativos; cuando es bare metal, se usan health endpoints HTTP equivalentes.
 
 
 
@@ -216,3 +223,16 @@ El núcleo del Dominio evalúa el estado del DataFrame para conmutar la estrateg
 * **Criterios de Aceptación:**
 * **Happy Path:** Una vez consolidados los motores de datos, riesgo y ejecución, se define la vía de salida de telemetría. Si se aprueba el Frontend, NestJS habilitará Gateways internos estructurados para transmitir el estado del balance y operaciones en tiempo real a la UI. Si se descarta, se construirán adaptadores ligeros para despachar eventos estructurados directos hacia APIs de mensajería externa.
 * **Sad Path:** Durante su construcción, fallas en la entrega o consumo de payloads de telemetría (sea por caída del Front o saturación de webhooks externos) jamás deberán interferir, bloquear o agregar latencia de hilos al bucle principal del Core de trading e IA de FastAPI.
+
+---
+
+## 6. Invariantes Arquitectónicas (Resumen)
+
+Las siguientes invariantes son **no negociables** y se verifican automáticamente en pre-merge (ver `AGENTS.md` §2 para el detalle completo y las 14 invariantes):
+
+* **#8 HEXAGONAL — Domain:** el Dominio no importa de Application ni Infrastructure.
+* **#9 HEXAGONAL — Application:** Application solo importa ports (interfaces), nunca adapters concretos.
+* **#10 HEXAGONAL — data-engine ↔ analytics-engine:** la comunicación entre los dos servicios ocurre **únicamente** vía el `MessageBus` (broker RESP-compatibile). Nunca imports directos.
+* **#11 STACK LEAKAGE:** `ioredis`/`ws`/`ccxt` solo dentro de `apps/data-engine/src/infrastructure/`. `pandas`/`ta`/`tensorflow` solo dentro de `apps/analytics-engine/app/infrastructure/`.
+* **#12 TICK PIPELINE:** inyección al broker en `<2ms` p99 (spec §5 Historia 1).
+* **#14 DEPLOYMENT AGNOSTICISM:** el código de aplicación no asume Docker. Hostnames via env vars (`ARGOS_BROKER_URL`, `EXCHANGE_*`), paths via `path.join` / `os.path.join`, broker via `MessageBus` port (no hardcoded a Redis). `docker-compose.yml` es una opción de deploy, no la única. El sistema corre bare metal con el mismo binario.

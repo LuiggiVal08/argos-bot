@@ -18,20 +18,51 @@ const tryRun = (cmd: string, args: string[]): string => {
   }
 }
 
+const commandExists = (cmd: string): boolean => {
+  try {
+    execFileSync("command", ["-v", cmd], { stdio: "ignore" })
+    return true
+  } catch {
+    return false
+  }
+}
+
+const httpGet = async (
+  url: string,
+  timeoutMs = 2000
+): Promise<{ ok: boolean; status: number; body: string }> => {
+  try {
+    const ctrl = new AbortController()
+    const t = setTimeout(() => ctrl.abort(), timeoutMs)
+    const r = await fetch(url, { signal: ctrl.signal })
+    clearTimeout(t)
+    const body = await r.text()
+    return { ok: r.ok, status: r.status, body: body.slice(0, 200) }
+  } catch (e: any) {
+    return { ok: false, status: 0, body: e?.message ?? "unreachable" }
+  }
+}
+
+const expandConfigUrl = (raw: string | undefined): string => {
+  if (!raw) return ""
+  return raw.replace(/\$\{([A-Z_][A-Z0-9_]*)\}/g, (_, k) => process.env[k] ?? "")
+}
+
 const fileMarkers: { label: string; rel: string }[] = [
   { label: "spec.md", rel: "spec.md" },
   { label: "config.json", rel: "config.json" },
   { label: ".env.example (data-engine)", rel: "apps/data-engine/.env.example" },
   { label: ".env.example (analytics-engine)", rel: "apps/analytics-engine/.env.example" },
   { label: "package.json (data-engine)", rel: "apps/data-engine/package.json" },
-  { label: "pyproject.toml (analytics-engine)", rel: "apps/analytics-engine/pyproject.toml" },
-  { label: "docker-compose.yml", rel: "docker-compose.yml" },
+  { label: "pyproject.toml (analytics-engine)", rel: "apps/analytics-engine/pyproject.json" },
+  { label: "docker-compose.yml (optional)", rel: "docker-compose.yml" },
   { label: ".gitignore", rel: ".gitignore" },
+  { label: ".gitattributes", rel: ".gitattributes" },
 ]
 
 export const health_check = tool({
   description:
-    "One-shot diagnostic: git status, docker compose ps, redis ping, ENVIRONMENT_MODE, and presence of base files. Markdown-formatted summary.",
+    "One-shot diagnostic. Auto-detects deployment model (Docker / bare metal). Reports git status, broker reachability, ENVIRONMENT_MODE, base files, and either docker compose ps or HTTP health endpoints. Markdown-formatted summary.",
   args: {},
   async execute() {
     const out: string[] = []
@@ -50,15 +81,67 @@ export const health_check = tool({
     out.push("```")
     out.push("")
 
-    out.push("## Docker compose services")
-    out.push("```")
-    out.push(tryRun("docker", ["compose", "ps"]))
-    out.push("```")
+    const dockerAvailable = commandExists("docker")
+    const composeFile = path.join(ROOT, "docker-compose.yml")
+
+    out.push("## Deployment model detection")
+    if (dockerAvailable && existsSync(composeFile)) {
+      out.push("- [docker] docker CLI found AND `docker-compose.yml` present — using Docker path")
+    } else if (dockerAvailable) {
+      out.push("- [bare-metal] docker CLI found BUT no `docker-compose.yml` — using bare-metal path")
+    } else {
+      out.push("- [bare-metal] docker CLI NOT found — using bare-metal path")
+    }
     out.push("")
 
-    out.push("## Redis ping")
+    if (dockerAvailable && existsSync(composeFile)) {
+      out.push("## Docker compose services")
+      out.push("```")
+      out.push(tryRun("docker", ["compose", "ps"]))
+      out.push("```")
+      out.push("")
+    } else {
+      out.push("## HTTP health endpoints (bare metal)")
+      const data = await httpGet("http://localhost:3000/health")
+      const analytics = await httpGet("http://localhost:8000/health")
+      out.push("```")
+      out.push(`data-engine        : ${data.ok ? "OK" : "DOWN"} (${data.status}) ${data.body}`)
+      out.push(`analytics-engine   : ${analytics.ok ? "OK" : "DOWN"} (${analytics.status}) ${analytics.body}`)
+      out.push("```")
+      out.push("")
+    }
+
+    const brokerUrl =
+      expandConfigUrl(process.env.ARGOS_BROKER_URL) ||
+      (() => {
+        try {
+          const cfg = JSON.parse(
+            require("fs").readFileSync(path.join(ROOT, "config.json"), "utf8")
+          )
+          return expandConfigUrl(cfg?.broker?.url)
+        } catch {
+          return ""
+        }
+      })()
+
+    out.push("## Broker reachability")
     out.push("```")
-    out.push(tryRun("redis-cli", ["ping"]))
+    out.push(`URL              : ${brokerUrl || "(not configured)"}`)
+    if (brokerUrl) {
+      if (commandExists("redis-cli")) {
+        out.push(`redis-cli PING   : ${tryRun("redis-cli", ["-u", brokerUrl, "ping"])}`)
+      } else {
+        const u = new URL(brokerUrl)
+        const isUp = await httpGet(`http://${u.hostname}:${u.port || 6379}/`).catch(() => ({
+          ok: false,
+          status: 0,
+          body: "n/a (RESP brokers don't expose HTTP)",
+        }))
+        out.push(
+          `TCP probe        : ${isUp.status > 0 ? `responded (${isUp.status})` : "unreachable or RESP-only (no HTTP)"}`
+        )
+      }
+    }
     out.push("```")
     out.push("")
 
@@ -75,7 +158,7 @@ export const health_check = tool({
 
 export const tick_rate = tool({
   description:
-    "Sample XLEN of a Redis stream 5 times over ~2s and report the items/second rate. Use to gauge tick-pipeline backpressure.",
+    "Sample XLEN of a broker stream 5 times over ~2s and report the items/second rate. Use to gauge tick-pipeline backpressure.",
   args: {
     stream: tool.schema.string().describe("Stream name, e.g. ticks:btcusdt"),
     samples: tool.schema

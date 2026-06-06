@@ -1,7 +1,7 @@
 ---
 project: argos-bot
-total_tasks: 13
-completed: 13
+total_tasks: 14
+completed: 14
 in_progress: 0
 blocked: 0
 overall_pct: 100
@@ -48,8 +48,9 @@ last_updated: 2026-06-06
 - [x] S011 — 16 tools con `args: {}` añadidos
 - [x] S012 — Crear `AGENTS.md` con reglas e invariantes
 - [x] S013 — Crear `TASKS.md` (este archivo)
+- [x] S014 — Refactor agnóstico: spec.md + AGENTS.md + config.json + README + health.ts + .gitattributes
 
-**Progreso**: 13/13 = **100%**
+**Progreso**: 14/14 = **100%**
 
 ---
 
@@ -142,3 +143,7 @@ _Ninguno actualmente._
 - ✅ 5 tools verificados con invocación real: `spec_invariants`, `risk_position_size`, `risk_drawdown_check`, `config_read_config`, `spec_summary`.
 - ✅ `AGENTS.md` y `TASKS.md` creados.
 - ✅ Política de permisos en `opencode.json` para tools destructivos.
+- ✅ Git inicializado, `main` y `dev` pusheadas a `origin` (commits `f3c46e0`, `423221e`).
+- ✅ `LICENSE` (MIT) y `README.md` creados.
+- ✅ Refactor agnóstico: spec.md §1, §1.2, §4, §6 amendados; AGENTS.md §1, §2 #14, §7, §11 actualizados; config.json migrado a `broker: { kind, url: ${ARGOS_BROKER_URL} }`; `.gitattributes` creado; README "Quick start" dual (Docker + bare metal con WSL2/Memurai); `health_health_check` con detección de deployment model; `docker_docker_*` tools anotados como "uso solo con deploy Docker".
+- ✅ Sección 12 (Git workflow) añadida a AGENTS.md.
