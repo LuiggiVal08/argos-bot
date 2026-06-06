@@ -1,0 +1,20 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "plugin": [
+        "@nick-vi/opencode-type-inject"
+    ],
+    "mcp": {
+        "context7": {
+            "type": "remote",
+            "url": "https://mcp.context7.com/mcp",
+            "enabled": true
+        }
+    },
+    "permission": {
+        "bootstrap_init_*": "ask",
+        "config_toggle_mode": "ask",
+        "docker_docker_restart_service": "ask",
+        "redis_redis_flush": "ask",
+        "redis_redis_set": "ask"
+    }
+}

@@ -1,0 +1,1577 @@
+{
+  "version": 1,
+  "skills": {
+    "3dsvg-interactive-react": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/3dsvg-interactive-react/SKILL.md",
+      "computedHash": "a60c9172a1cdeae16c3ac2946452777a4bb72e04cb8422f987b027301fdc0782"
+    },
+    "724-office-ai-agent": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/724-office-ai-agent/SKILL.md",
+      "computedHash": "9ebbaae77997bd29ebecda186e8f112e8841713d5c7abb4272a23e75477e66dc"
+    },
+    "acgti-anime-persona-quiz": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/acgti-anime-persona-quiz/SKILL.md",
+      "computedHash": "255ec344e95d19dbb10daed6ed174b6810f541db9281cecc3b04909271cd202e"
+    },
+    "agency-agents-ai-specialists": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/agency-agents-ai-specialists/SKILL.md",
+      "computedHash": "e062d1a5cf18bf4e2f2c88298cc1deb7b2f2327ac6866d3fdd26818c2e94c2a2"
+    },
+    "agent-browser-automation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/agent-browser-automation/SKILL.md",
+      "computedHash": "afc463a4f179809d9eb0b19e0256b6487985ce207ddeca2d6a10e4f2af638d5b"
+    },
+    "agent-flow-visualization": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/agent-flow-visualization/SKILL.md",
+      "computedHash": "aa618cbe0cacd474a634008bf518777a9448e698449e1d9d107f3c0974492ec7"
+    },
+    "aglais-xqvm-quantum-vm": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/aglais-xqvm-quantum-vm/SKILL.md",
+      "computedHash": "0771c1c097af35da9d58238f57833ea3420e4f5764c5bdacc391d32e945c2648"
+    },
+    "ai-scanner-garak": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ai-scanner-garak/SKILL.md",
+      "computedHash": "524b2c856e6d78c4d62b9c25f6ab8ebc3c68ffff21a4d3afa67952ff49d2e0af"
+    },
+    "alayarenderer-generative-world": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/alayarenderer-generative-world/SKILL.md",
+      "computedHash": "8ef079bc5d3386428cd8a7fdeaf4e6f181f43c7b67fc4e4ab1c8cbdd7772b7a0"
+    },
+    "antigravity-manager": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/antigravity-manager/SKILL.md",
+      "computedHash": "5d968c06792b43333d947d537b71dc890fbe5bd92a79fba9667ad495252bb42e"
+    },
+    "anubis-android-app-manager": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/anubis-android-app-manager/SKILL.md",
+      "computedHash": "4c6a2cbcf6e50550906c62a1730ba2919861f0bf9df74097395a2dbc218ae7b4"
+    },
+    "anything-analyzer-cdp": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/anything-analyzer-cdp/SKILL.md",
+      "computedHash": "5cf260acf322a2da02cc875fb7c661e75057eae559995abd76380c2e4a6d2b68"
+    },
+    "app-store-screenshots-generator": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/app-store-screenshots-generator/SKILL.md",
+      "computedHash": "7be261c9e08e0b7f51d5f476ee603277539f98bd0562834ad54afa0726662079"
+    },
+    "aracli-deploy-management": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/aracli-deploy-management/SKILL.md",
+      "computedHash": "eda48fea2eeca7dfc5ad2b9e08c00a7124446726a2cdfac63f9583e8a0fed9f5"
+    },
+    "aster-bot-trading": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/aster-bot-trading/SKILL.md",
+      "computedHash": "69d596ec30253612e6ec19a47666510edcf251b47dfd69dcc5ec279f552e70a2"
+    },
+    "aube-package-manager": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/aube-package-manager/SKILL.md",
+      "computedHash": "f99ffefd0050c4ab87a5faec5f02b98755fd92792510f0d0525a628082f55a3f"
+    },
+    "autoresearch-genealogy": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/autoresearch-genealogy/SKILL.md",
+      "computedHash": "dcb230d8f4637e3e51c6f8e73fa6fa96f3899d8078410144ba6e52a3fa0a25b2"
+    },
+    "autoresearchclaw-autonomous-research": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/autoresearchclaw-autonomous-research/SKILL.md",
+      "computedHash": "36255bdd2437b3799bc362ec16ead83b26f05a83568e9e19a890369e236edab7"
+    },
+    "autoteam-chatgpt-rotation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/autoteam-chatgpt-rotation/SKILL.md",
+      "computedHash": "0b44031478e000f58be7d81f943ef9d3c13158119ec156b274d8efd4f177fa0c"
+    },
+    "autoteam-f-chatgpt-team-rotation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/autoteam-f-chatgpt-team-rotation/SKILL.md",
+      "computedHash": "5939f830ac1e2e742ab8c8d83c56a739cf2f85558145a7c231fa3ad447c9768e"
+    },
+    "awawausb-webusb-firefox": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/awawausb-webusb-firefox/SKILL.md",
+      "computedHash": "417d85e9f7045cfcd07dca3ec192a70ad9651c0a588b080baac148062cc3e00b"
+    },
+    "awesome-design-md-jp": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/awesome-design-md-jp/SKILL.md",
+      "computedHash": "14958ea4ae74d25924a901080adc0241d12149c3ea221f600acb01d46f8c35b8"
+    },
+    "awesome-free-llm-apis": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/awesome-free-llm-apis/SKILL.md",
+      "computedHash": "d14e9a99ed1c12088e3dbeb1e9eab03bf2d4c5aa6585310640770add94f6b0ad"
+    },
+    "awesome-phd-cv": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/awesome-phd-cv/SKILL.md",
+      "computedHash": "62ea6ebc48d22784569b441bf11408b89fc9a1b0b27988488a8df9213277b41a"
+    },
+    "baguette-ios-simulator": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/baguette-ios-simulator/SKILL.md",
+      "computedHash": "88cbb3f80514349f7ed3cd0e28b721da9378ee4750dcef7b7ec74f3173e3819e"
+    },
+    "bazi-skill-chinese-astrology": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bazi-skill-chinese-astrology/SKILL.md",
+      "computedHash": "a78b16643b7c2b1f6a063de21c54b15ad9181857a6347d91329389312a49d4c9"
+    },
+    "binance-futures-signal-bot": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/binance-futures-signal-bot/SKILL.md",
+      "computedHash": "72d2f83f037930b9746f0394b0b92dd80a1f49d69c4ba912c0fa6f08b12d2ac8"
+    },
+    "bluehammer-vulnerability-poc": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bluehammer-vulnerability-poc/SKILL.md",
+      "computedHash": "93deb099eceff981ff040b80fe4fc1412f9b4d06bf4cb52deb022d42ac1abff2"
+    },
+    "border-beam-react": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/border-beam-react/SKILL.md",
+      "computedHash": "86f014cf919ab46e52bf041ce3f6c700b07aa49070d0e4fff3ce9091639d2c5a"
+    },
+    "bouncer-feed-filter": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bouncer-feed-filter/SKILL.md",
+      "computedHash": "1823cc4239083ff74d6f9f731e547df601497246fe9a7ddc2ae4617976d3f611"
+    },
+    "brreg": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/brreg/SKILL.md",
+      "computedHash": "05ce0f41bf436ffbcb3244cb4eb902b3f0779c58a1fdac481c4e11ea5443b682"
+    },
+    "bux-claude-agent": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bux-claude-agent/SKILL.md",
+      "computedHash": "39df3abac2b2987e4597bc1110aaf24a7c4b32ad7debd07508672e480a322707"
+    },
+    "cabinet-ai-knowledge-base": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cabinet-ai-knowledge-base/SKILL.md",
+      "computedHash": "7b860d1bbbe00be8ea460d4aacb02f133cb512ea6d9693fc6573fd711b07465f"
+    },
+    "cairn-ai-pentest": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cairn-ai-pentest/SKILL.md",
+      "computedHash": "ed5abd6bec434ae7fe85baedd6424886f5ffd0b92c89bb5864f1fcb3aa34867f"
+    },
+    "capso-screenshot-macos": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/capso-screenshot-macos/SKILL.md",
+      "computedHash": "dbb4b62132128715ce44fba7b17bfd11c1b5e0454a5c350ed9494dd6c067fbc1"
+    },
+    "career-ops-job-search": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/career-ops-job-search/SKILL.md",
+      "computedHash": "49017b30939df908586a0090eaa16fc29fe556b3ad57c6c9e2940dc3d99d2147"
+    },
+    "cc-connect-ai-bridge": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cc-connect-ai-bridge/SKILL.md",
+      "computedHash": "487d00e0eccac9e86e7b4b4d266d29ef165ab0d392f26e37f5ce5d5cebee6f9b"
+    },
+    "cc-design-html-prototyping": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cc-design-html-prototyping/SKILL.md",
+      "computedHash": "7cd1f019b9c37c700820a02a0e08685fb592efb0c9127421e304248d481c6cae"
+    },
+    "ccxt-python": {
+      "source": "ccxt/ccxt",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ccxt-python/SKILL.md",
+      "computedHash": "a1781c81c8bc00f2333e48dd40e3ea00a7896c9b652bcb04862f1299467e7b67"
+    },
+    "chrome-cdp-live-browser": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/chrome-cdp-live-browser/SKILL.md",
+      "computedHash": "fbbc178d8849d2efb81d99a8912800d5e7e0267a5027743e08959ca1e7676f20"
+    },
+    "claude-better-cli": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/claude-better-cli/SKILL.md",
+      "computedHash": "f133d2c3297245c7dbb48ba89505eb51ed4a5aa06b2812994bab98223df2f3a8"
+    },
+    "claude-code-source-recovery": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/claude-code-source-recovery/SKILL.md",
+      "computedHash": "2f5ea209157bdb2826026bb54cf01eaf4da24ca6d228ad38a496c2c656bc4b54"
+    },
+    "claude-code-source-study": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/claude-code-source-study/SKILL.md",
+      "computedHash": "6af3b19c3407ef326acdf7d971030fc9bc401aa7499e1241e221cf7597b6251c"
+    },
+    "claude-hud-statusline": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/claude-hud-statusline/SKILL.md",
+      "computedHash": "c7ea9211e8d8111670fa61322a85e632d0fb065146cc0c6baa6c4b28edf7bb42"
+    },
+    "claude-peers-mcp": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/claude-peers-mcp/SKILL.md",
+      "computedHash": "5cc6db3d19fd19a483f26b1728d79c01e9454505f4bde106f02f6bf905460afa"
+    },
+    "claude-skill-app-onboarding-questionnaire": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/claude-skill-app-onboarding-questionnaire/SKILL.md",
+      "computedHash": "3772d95c62941080ba95cfc48f5aaefa752cf19840c209487747a2c09de21536"
+    },
+    "claw-code-harness": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/claw-code-harness/SKILL.md",
+      "computedHash": "9c2f04496555e28aed9fc7cff12acf393e18f5e57e2a00a502338e198711157a"
+    },
+    "clawd-code-python-port": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/clawd-code-python-port/SKILL.md",
+      "computedHash": "37221b605615c5fbd406547b85128726ad983ddafa15c0ff9db21ac2f73ee50f"
+    },
+    "clawgod-claude-code-patch": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/clawgod-claude-code-patch/SKILL.md",
+      "computedHash": "fd818228fdb32b4e8b752108e26982e81064181408aa01872138f7afc03fc5f4"
+    },
+    "cli-to-js-api-wrapper": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cli-to-js-api-wrapper/SKILL.md",
+      "computedHash": "a72be18503ed751361e716ba3f467419a6dc5622d5d4cf48357d8fe0aa4c2131"
+    },
+    "club-3090-llm-serving": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/club-3090-llm-serving/SKILL.md",
+      "computedHash": "57d3986afc4e3b7ed72c0bc9e60e07ef1db206342e8532e9d93b5dcd4c74a746"
+    },
+    "clui-cc-claude-overlay": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/clui-cc-claude-overlay/SKILL.md",
+      "computedHash": "020b4dffd91cf9d1baf69974822cece94a6d22596940fe4462a31d94fff0e39e"
+    },
+    "cmux-terminal-multiplexer": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cmux-terminal-multiplexer/SKILL.md",
+      "computedHash": "ee446b3dd939482231d0bc9b8fd194d0dc39b8e5a9a2ca7808a9ba5972921b43"
+    },
+    "code-review-graph": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-review-graph/SKILL.md",
+      "computedHash": "96cbafc931a1f3910e099ca1726fe499b926867d63ed0adcafb29b686a4291bf"
+    },
+    "codeburn-claude-cost-dashboard": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/codeburn-claude-cost-dashboard/SKILL.md",
+      "computedHash": "79a492de798119aafc67b194fa901468511babc0e09add2c5bb46f604f8ca928"
+    },
+    "codesight-ai-context": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/codesight-ai-context/SKILL.md",
+      "computedHash": "97d830e22f7ecd4d4c32755ff018537f39ab940aa6a1fb3e84d88c1b733296d5"
+    },
+    "codex-autoresearch-loop": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/codex-autoresearch-loop/SKILL.md",
+      "computedHash": "80b3e645bf05dc518f143154d84c4d9c265b522233f6634a3a7b9114b583b4fc"
+    },
+    "codex-oauth-automation-extension": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/codex-oauth-automation-extension/SKILL.md",
+      "computedHash": "de40eea6fd3e578edb65f52b017d873adadcdbf25f1cfbbc34e4f1c36778ec45"
+    },
+    "codex-plugin-cc": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/codex-plugin-cc/SKILL.md",
+      "computedHash": "47c5dfd40a464770cd6363c73971a15ce9448ec11a3b9321649f675e74796f7e"
+    },
+    "codex-plusplus-tweak-system": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/codex-plusplus-tweak-system/SKILL.md",
+      "computedHash": "5b69f0f20a2ebe75231a641f22850b6305312cd765174d9629b919b813446fe7"
+    },
+    "codex-session-patcher": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/codex-session-patcher/SKILL.md",
+      "computedHash": "3b9f90941291b609d0abd912897a7fe56c990c13a5f280465f9e2d842d6ca9d1"
+    },
+    "copaw-ai-assistant": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/copaw-ai-assistant/SKILL.md",
+      "computedHash": "ffdf01190b0d982a936d6d4e232cffc6c6601cce4ce2b94cf328c8221ab2b271"
+    },
+    "copyfail-go-lpe": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/copyfail-go-lpe/SKILL.md",
+      "computedHash": "273bded28d6f421f29a9d2c523325c774fde14b24cc67ff68a0cca8167e0270c"
+    },
+    "corridorkey-green-screen": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/corridorkey-green-screen/SKILL.md",
+      "computedHash": "6d8d80eb2686e6085d0bc409209427e02e850fbbf2c73e7491135ff23c28b140"
+    },
+    "crabtrap-llm-proxy": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/crabtrap-llm-proxy/SKILL.md",
+      "computedHash": "04c6d167e3617a3622f315e2773e0eefbe34fc302b38bbdb4aa8bb5efa478e1b"
+    },
+    "create-simulated-aeronautics-mod": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/create-simulated-aeronautics-mod/SKILL.md",
+      "computedHash": "6a829429845ecef3ba4d007296417eb2d2d71f939f2eedebe39533ed3ec0c3c5"
+    },
+    "creationix-rx-data-store": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/creationix-rx-data-store/SKILL.md",
+      "computedHash": "4b418383009ddba84d629bbed4d428f7071aa94858ded457cfe686e6e79c29c5"
+    },
+    "crucix-intelligence-dashboard": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/crucix-intelligence-dashboard/SKILL.md",
+      "computedHash": "3778d6ebb4f94b4d4add0d001717b9e5026e2602c008ae4a2209d8a69eb6f29e"
+    },
+    "cubesandbox-ai-sandbox": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cubesandbox-ai-sandbox/SKILL.md",
+      "computedHash": "98c84e7332c6630f85422ca5a75f8cba2fba18b424ff1f267e1408489687d10f"
+    },
+    "cuimao-translator": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cuimao-translator/SKILL.md",
+      "computedHash": "3c12a26daf87d03edfadab1b4402387e8f515daa122b43dcff305935fc9b0349"
+    },
+    "cve-2026-31431-copy-fail": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cve-2026-31431-copy-fail/SKILL.md",
+      "computedHash": "18eaa213facae778b1388bf5a77a85c4658f53c929857afb4aafed38091ca90d"
+    },
+    "daily-stock-analysis": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/daily-stock-analysis/SKILL.md",
+      "computedHash": "d8a7160a847152be5e0d72650c93fb5698c9177edf8d03173c5b3c54f1b671e4"
+    },
+    "dbx-database-client": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/dbx-database-client/SKILL.md",
+      "computedHash": "c42394e7f4a59cd54765a3899e4d017d5b6c895f1dd4c0f0c5f115162a03fb28"
+    },
+    "deepclaude-proxy": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/deepclaude-proxy/SKILL.md",
+      "computedHash": "ea95efae9d07c6c30ce1ff41c1b86b8300369bd2f2881a894677ccd8d68c1f4c"
+    },
+    "deepsec-vulnerability-scanner": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/deepsec-vulnerability-scanner/SKILL.md",
+      "computedHash": "804726ed84050e6ad8382583e7c951b608f11098156c5424b861eec07d80c71f"
+    },
+    "deepseek-ocr": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/deepseek-ocr/SKILL.md",
+      "computedHash": "32902640e53b097f0ff274ab7da556f7c34d0adf93877854876643f487c92ddd"
+    },
+    "designlang-design-extract": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/designlang-design-extract/SKILL.md",
+      "computedHash": "aa15cda3e4a1f3817d7131be1118c9fed15a33e76da9dafc742e1baa6b4ce9fb"
+    },
+    "dflash-mlx-speculative-decoding": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/dflash-mlx-speculative-decoding/SKILL.md",
+      "computedHash": "21542071662e1f2ae2292d0268792cd75b57290d42870aa58f4463037a329b91"
+    },
+    "diagram-design-editorial": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/diagram-design-editorial/SKILL.md",
+      "computedHash": "f3bf675c0f7f8be21570e44d0542356cb805d00d72a1e6c32097489cc88232ef"
+    },
+    "dingtalk-workspace-cli": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/dingtalk-workspace-cli/SKILL.md",
+      "computedHash": "fc466fc66c019d5b9c81df290a1f6486234b105bb3661b0addcde53ac1615729"
+    },
+    "dnshe-freedomains": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/dnshe-freedomains/SKILL.md",
+      "computedHash": "6342120a5b87083c38fc69bc28de54eb5d994b8b7e62cf70f874c9ab4a3701af"
+    },
+    "edict-multi-agent-orchestration": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/edict-multi-agent-orchestration/SKILL.md",
+      "computedHash": "6b2a66f7d4dcf354262fd09ffbbd7b7799f06e9c13b5b02a42d25c5934d49c4f"
+    },
+    "emdash-cms": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/emdash-cms/SKILL.md",
+      "computedHash": "d4f904572ceee6c576e587e45c4af07acb672b0271d9a72dca0c67ebe6a9f8b5"
+    },
+    "everything-claude-code-harness": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/everything-claude-code-harness/SKILL.md",
+      "computedHash": "3eec2d94cbe2afcbdf2c31f4fdbba87de8515568b2877b6137e8781a7eb21f2c"
+    },
+    "fabro-workflow-factory": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/fabro-workflow-factory/SKILL.md",
+      "computedHash": "0b9b5cbc7d1656f43dce7d386ec4202218d033dc4eeea85c1d869db36ff287b6"
+    },
+    "fastapi-python": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "fastapi-python/SKILL.md",
+      "computedHash": "1d7346210a6690d2faeb089f074c0dc20a7056c2c83ac1062a11c1b73158be72"
+    },
+    "filmkit-fujifilm-camera": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/filmkit-fujifilm-camera/SKILL.md",
+      "computedHash": "091b263d9a9b7250870f2f541bea754dcc700a1ad87fb38304ed1e799158ac42"
+    },
+    "fl-studio-patcher-malware-warning": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/fl-studio-patcher-malware-warning/SKILL.md",
+      "computedHash": "26bc3ae79eefca74908acbf5654ed584c1bafeb270a43e916b730cd66ad16e60"
+    },
+    "flash-moe-inference": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/flash-moe-inference/SKILL.md",
+      "computedHash": "a51c2dcc3317aa578e45a73c73a88bb8a4e790c5fd74693c765b7e175a1f78ae"
+    },
+    "flashkda-delta-attention": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/flashkda-delta-attention/SKILL.md",
+      "computedHash": "2511f9c0913cb32a401b3020022f1b601620966bdfea9184ef34c620adb8d2d8"
+    },
+    "flipoff-split-flap-display": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/flipoff-split-flap-display/SKILL.md",
+      "computedHash": "e87a64bd3d2adfa96562edae0bc9347157acb15b52d2478930413c4c6b33e960"
+    },
+    "flowdriver-covert-transport": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/flowdriver-covert-transport/SKILL.md",
+      "computedHash": "9fc7d99295a330b74b58680d3da91a8aaf63ae17c9cc0b23bf795e6d1e96a309"
+    },
+    "free-code-claude-cli": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/free-code-claude-cli/SKILL.md",
+      "computedHash": "4b1a7932353a0c04946ec844494a82e74a1dccdca9c6aa18f09f8d35885cfd79"
+    },
+    "freebuff2api-openai-proxy": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/freebuff2api-openai-proxy/SKILL.md",
+      "computedHash": "f309683b2b4818c829a746e9b2d1addead01182fda62af0bf049b8df9e2b0e62"
+    },
+    "freecodecamp-curriculum": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/freecodecamp-curriculum/SKILL.md",
+      "computedHash": "fc2dcf7d7b09f3c3508718b10b6e067ab8547a9df6e0fed6640351fd7fb1bdc5"
+    },
+    "freellmapi-proxy": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/freellmapi-proxy/SKILL.md",
+      "computedHash": "a5363df084ad56c5046c75cb8ddbb9a91c52f835ebff8d7094808637a769bac8"
+    },
+    "future-agi-platform": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/future-agi-platform/SKILL.md",
+      "computedHash": "ac0cf4c55205ba9426e4ec4edfbed25b961dfe850dc4f5a6df5015cb595a8209"
+    },
+    "gemma-gem-browser-ai": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gemma-gem-browser-ai/SKILL.md",
+      "computedHash": "ae0c6a9c339b50dd54ffbc9c1a84b7b984b5ae5ad281233fae508d90d22e0a76"
+    },
+    "gemma-tuner-multimodal": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gemma-tuner-multimodal/SKILL.md",
+      "computedHash": "e3c39676590c811720835278de2d4735d70f6b3abd65c0fca69c57be114108b4"
+    },
+    "geoflow-content-automation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/geoflow-content-automation/SKILL.md",
+      "computedHash": "66d2e06fb4af06959e38ac0c60768ad78f70909113eb8e10b647351788908b20"
+    },
+    "ghostling-libghostty-terminal": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ghostling-libghostty-terminal/SKILL.md",
+      "computedHash": "55e20c0a841f97da1554e7f16e335823817335a1e064f521606b3726501ae89a"
+    },
+    "git-city-3d-github-visualization": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/git-city-3d-github-visualization/SKILL.md",
+      "computedHash": "c4be47c1f48c5a46b32082c62e079b8073461de38c6c76c5132b3e7da58153b6"
+    },
+    "gitbackup-github-desktop": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gitbackup-github-desktop/SKILL.md",
+      "computedHash": "48b491200926d06403976137271bec012a9f64a8250abe0819e9cc5c62541d58"
+    },
+    "github-sandbox-file-downloader": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/github-sandbox-file-downloader/SKILL.md",
+      "computedHash": "b72d71b4f71692208b44cc9177019244cb91f07f04435b78f9002ed05b0fc04e"
+    },
+    "gooserelayvpn-socks5-tunnel": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gooserelayvpn-socks5-tunnel/SKILL.md",
+      "computedHash": "30d3ce1e0dc42f4deeec1948b356c75e55a7ff7b6a9fb1a5a02eddf5de994832"
+    },
+    "gova-declarative-gui": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gova-declarative-gui/SKILL.md",
+      "computedHash": "fd7a05c88ef813fda6784c1cb8949acffd7a9f2af4d426db6bbe09fe5b34ab94"
+    },
+    "gpt-agreement-payment-replay": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gpt-agreement-payment-replay/SKILL.md",
+      "computedHash": "3727389ff715ad53e002661b662f06a1b31e9559ed052589dc1d0ae2a62473ce"
+    },
+    "gpt-image-2-skill": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gpt-image-2-skill/SKILL.md",
+      "computedHash": "3688bc31238cb14ad035c75a61a6f74dd8aed48ffef026a2fe36874c5856f78a"
+    },
+    "gpt-image-playground": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gpt-image-playground/SKILL.md",
+      "computedHash": "936321ee0eabdd416d567bdef435e30278efe1670169dc56b891df9c6e32350c"
+    },
+    "gpt-pp-team-protocol-replay": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gpt-pp-team-protocol-replay/SKILL.md",
+      "computedHash": "a83106aa66aa8cf03e230db4e188c088c301ed5c8ee59e8a8055e81d58ff3665"
+    },
+    "gpt2api-openai-gateway": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gpt2api-openai-gateway/SKILL.md",
+      "computedHash": "e93ce9d3369e97e231b896a5e3b5c0cd10550728a3eca04cecf0efda032562fa"
+    },
+    "grimmory-self-hosted-library": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/grimmory-self-hosted-library/SKILL.md",
+      "computedHash": "8a75b4aa4f6822ba1cac8bde77cbd18128a22d9a4b3d883c85a4c44004a9c56a"
+    },
+    "gsd-2-agent-framework": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gsd-2-agent-framework/SKILL.md",
+      "computedHash": "f7014222d07c469fcabe0fb822a970ce48399b67f308dc0c0ce443834cfb570e"
+    },
+    "gstack-workflow-assistant": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gstack-workflow-assistant/SKILL.md",
+      "computedHash": "75b4ad58a7a7bbbaa96714b6811d30f95a93b446a61f9dca656690dfd29b8c31"
+    },
+    "hexagonal-architecture": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "skillPath": "skills/hexagonal-architecture/SKILL.md",
+      "computedHash": "079f825ab203e42b8a5acbefb2ba50536718e1ec31d100b9521660ba0af749dd"
+    },
+    "holyclaude-ai-workstation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/holyclaude-ai-workstation/SKILL.md",
+      "computedHash": "02c86f3e13a7b7847d7e5783e6ebc7b20f69412b631756b7088738ac25e4e169"
+    },
+    "html-ppt-skill": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/html-ppt-skill/SKILL.md",
+      "computedHash": "4121f321d839004f14502e58e6e17209ef0b0d49b6dca0051a8d2b937a321691"
+    },
+    "huashu-design-html-native": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/huashu-design-html-native/SKILL.md",
+      "computedHash": "8c7977cf9b4ff65f088282979e0b92067bd02ee52547339fa253a783dbf14809"
+    },
+    "humanize-korean-ai-text": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/humanize-korean-ai-text/SKILL.md",
+      "computedHash": "3626c2199ec1f0f5191f8314080ea6cb2cb245e2e5471ec4b8735d99cb966c57"
+    },
+    "hy-world-2-0-3d-world-model": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/hy-world-2-0-3d-world-model/SKILL.md",
+      "computedHash": "173663da05524cd99acf61cf95c209c237e16314dd5e33b011bcc3f85cdcb9ff"
+    },
+    "illustrated-explainer-spec": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/illustrated-explainer-spec/SKILL.md",
+      "computedHash": "14f3a780fc8b332a83ea22a332a88314fad973b996a19d239ccd6b9fbd082e36"
+    },
+    "inkos-multi-agent-novel-writing": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/inkos-multi-agent-novel-writing/SKILL.md",
+      "computedHash": "fda9a0304f871f9cd746f37e3c0c7ae1aed0757f89d46b78ef39098d6768a07f"
+    },
+    "isolet-widget-isolation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/isolet-widget-isolation/SKILL.md",
+      "computedHash": "68dd69e7c2d82d612fe3fdb92f052cc1879b3596ddb9d0f6c1f3936e19a509c2"
+    },
+    "jkvideo-bilibili-react-native": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/jkvideo-bilibili-react-native/SKILL.md",
+      "computedHash": "3122fd36340f080dfb8f7f10d1a7d9073e16ce83dd77b3c09f583e13463f6c96"
+    },
+    "json-render-generative-ui": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/json-render-generative-ui/SKILL.md",
+      "computedHash": "cd0aa442427b8ccb91b1c490188fa0a891fbc0b2b38fdcf7b0957c61064d94ab"
+    },
+    "k-skill-korean-ai-tools": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/k-skill-korean-ai-tools/SKILL.md",
+      "computedHash": "14d882e7ff965a75411a18d698566b3c7f620fafcc15f7b9c9069a5850a777bf"
+    },
+    "kami-document-design": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/kami-document-design/SKILL.md",
+      "computedHash": "822c0b1f81a138b673277d28aaf277e9108f15f86b68ef912a772a0943cf6220"
+    },
+    "karpathy-jobs-bls-visualizer": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/karpathy-jobs-bls-visualizer/SKILL.md",
+      "computedHash": "6c7981b690a2c31af0329c630a3d66de250e8b5340b761ad03f8e887df8dc091"
+    },
+    "karpathytalk-community": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/karpathytalk-community/SKILL.md",
+      "computedHash": "197537bc09b9538a7b45fda50cdc398417e17364b06ab7ae3e376ecc40b52da2"
+    },
+    "keep-codex-fast-maintenance": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/keep-codex-fast-maintenance/SKILL.md",
+      "computedHash": "13c0043d006bf086908a388b041eea24563eed0612b8340d73dc65345f7b53bc"
+    },
+    "keychron-keyboards-hardware-design": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/keychron-keyboards-hardware-design/SKILL.md",
+      "computedHash": "f8b0dc6e41f271a55481eb1611f1e2cf072ee4e16dd1b9d74a6287b4d8ce762c"
+    },
+    "killerpdf-portable-editor": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/killerpdf-portable-editor/SKILL.md",
+      "computedHash": "657682f3b2ffaf9356a6684cf4535bc48bd6bc92960fbee9b45b829bfa6e4ec1"
+    },
+    "kimodo-motion-diffusion": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/kimodo-motion-diffusion/SKILL.md",
+      "computedHash": "3f5e8d668c581db2e5bd366162a71ded3b3bbb61b558bf252962a36cec2b0154"
+    },
+    "kordoc-korean-document-parser": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/kordoc-korean-document-parser/SKILL.md",
+      "computedHash": "9035fb7f6c0de99ad60479e389893c5973654bfb81d787fcff94ba49755f3732"
+    },
+    "kwcode-local-coding-agent": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/kwcode-local-coding-agent/SKILL.md",
+      "computedHash": "a5a8d0abf5ae95b2289212bbc3e92750e399b9f3981c715bfd507bc0f76a32cc"
+    },
+    "learn-docker-k8s-game": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/learn-docker-k8s-game/SKILL.md",
+      "computedHash": "f2b52d6d4e3345677ae9ecc87e4e04dcd190c8790a89b16ffc46ac8bd82eb0e8"
+    },
+    "legalize-es-spanish-legislation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/legalize-es-spanish-legislation/SKILL.md",
+      "computedHash": "3a496443f002d3c8e2f6ea94f6bf20bcf70465c92c6be27924aa755f33e059b9"
+    },
+    "lightpanda-browser": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/lightpanda-browser/SKILL.md",
+      "computedHash": "02345b0c8ca34d2ecba666a0dbab79f24b0cbd3db1f1ea402cb755d71a9ff9f2"
+    },
+    "lingbot-map-3d-reconstruction": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/lingbot-map-3d-reconstruction/SKILL.md",
+      "computedHash": "0a00d4e0deb2b4368b8b505574c6a00a2fef366af1a25cc7d5c22975dc58ed99"
+    },
+    "linjector-luau-script-ide": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/linjector-luau-script-ide/SKILL.md",
+      "computedHash": "8105a12c2724ab2745cf908b153f16445a2721defab12347345adf64e31ecc05"
+    },
+    "littlesnitch-linux": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/littlesnitch-linux/SKILL.md",
+      "computedHash": "2b4206e476cc8b7c32ee3ec3a55db1f87dff4198c9b116412363808e82656d61"
+    },
+    "llm-wiki-skill": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/llm-wiki-skill/SKILL.md",
+      "computedHash": "a2244494aafb4fba5a6a6066201bc4a813f57527d8533e26d7d8d5f173c49549"
+    },
+    "llmfit-hardware-model-matcher": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/llmfit-hardware-model-matcher/SKILL.md",
+      "computedHash": "266ac5b5abf29a23dd19dafd923352f54b8b6a0811489da94a440f31a4db660b"
+    },
+    "lsfg-android-frame-generation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/lsfg-android-frame-generation/SKILL.md",
+      "computedHash": "83da922db1347a91b7dde129d1450062ed843e5a29c1b36d3fa63ac4b0aa2dbd"
+    },
+    "maante-game-automation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/maante-game-automation/SKILL.md",
+      "computedHash": "87dfbffbcf07e570d88c5470915eac5cc9e70383751184a1c06925b16d570be2"
+    },
+    "mac-code-local-ai-agent": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mac-code-local-ai-agent/SKILL.md",
+      "computedHash": "95db3aee54f73b8f7dd23dce64b6a2e0e0caba1511b8d277f1aad457f708651e"
+    },
+    "maoxuan-skill-cognitive-framework": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/maoxuan-skill-cognitive-framework/SKILL.md",
+      "computedHash": "a571feb8de26d43a90cefa0a99c9b2e5c06ea4c660f5cab8c59bc1d10cdc7841"
+    },
+    "marketingskills-ai-agents": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/marketingskills-ai-agents/SKILL.md",
+      "computedHash": "7d969ad226219ac308f80cd4e3fe272f32c41e4d5afee1a7bd91ec575c714ed7"
+    },
+    "markit-markdown-converter": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/markit-markdown-converter/SKILL.md",
+      "computedHash": "32f44f5c67ef13af6a7a96e75d7da51d7677e7682c9757296b4a1353705a6149"
+    },
+    "masterhttprelayvpn-proxy": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/masterhttprelayvpn-proxy/SKILL.md",
+      "computedHash": "31811bd9db38abe14af29d120ebeb35e6b990e0806293a3ab0643fd84fb18f6b"
+    },
+    "masterhttprelayvpn-rust": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/masterhttprelayvpn-rust/SKILL.md",
+      "computedHash": "93dc964e7f215ed431c580d27150253031e24e8ae28870721a68ab282b22a170"
+    },
+    "md-preview-app-macos": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/md-preview-app-macos/SKILL.md",
+      "computedHash": "8756aeea3448f3cd3fbfcc5cabdf64ff7f93bc5fc3ec935f056defb92c68213f"
+    },
+    "mdv-markdown-visualization": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mdv-markdown-visualization/SKILL.md",
+      "computedHash": "f5cb547dc5f1fc46727a80ba0e2f6768e194d38d3a500b278ac36ee242fcdbf9"
+    },
+    "memory-lancedb-pro-openclaw": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/memory-lancedb-pro-openclaw/SKILL.md",
+      "computedHash": "c28fd85ec5f09b86617fcf8687f25b2335e318ab6fa22a69546de1b436551300"
+    },
+    "meta-harness-optimization": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/meta-harness-optimization/SKILL.md",
+      "computedHash": "7680c767a342c5b06c05ef44b8311305df39497a9cc566170767bd5d7c27da0e"
+    },
+    "metaclaw-evolving-agent": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/metaclaw-evolving-agent/SKILL.md",
+      "computedHash": "1659786d8270a24e61c2060a8812adda82f04e0daf7a04912caa7e4a3c38b355"
+    },
+    "mhr-cfw-domain-fronting-relay": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mhr-cfw-domain-fronting-relay/SKILL.md",
+      "computedHash": "f62b375c8e5c4c90d3eb4ee1aca769be72a4a0f32ac7caa1398a53e3f2d70cd3"
+    },
+    "minecraftconsoles-lce": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/minecraftconsoles-lce/SKILL.md",
+      "computedHash": "42cfc7344fe3f3f79d3d5fee96e1c26c8fdac81b1734437060257c1263c59e0c"
+    },
+    "ministack-aws-emulator": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ministack-aws-emulator/SKILL.md",
+      "computedHash": "f7fdbb0da38f48ae66f2dcf74eb10e3d5171bf11155627ccb17cdbfe489ee912"
+    },
+    "mirofish-offline-simulation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mirofish-offline-simulation/SKILL.md",
+      "computedHash": "7b5b87e4ba15971c6d8094944b48b7602d0f540ffd26c1908827024cc2ef0378"
+    },
+    "modly-image-to-3d": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/modly-image-to-3d/SKILL.md",
+      "computedHash": "1c8cbe031131a177835775aac51264b1fa05b90d06e75deeb91599f945c1ac73"
+    },
+    "mole-mac-cleaner": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mole-mac-cleaner/SKILL.md",
+      "computedHash": "f958153a30df2fa5eb17808b0b1d44a66adc7883aad281ad998767f3ddf8a17f"
+    },
+    "moss-tts-nano-speech": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/moss-tts-nano-speech/SKILL.md",
+      "computedHash": "e7ccd57e5fbbbe63f0ea19d45512b2e94de22be7d1de9820a91f3d9d26d5e51d"
+    },
+    "nestjs-best-practices": {
+      "source": "kadajett/agent-nestjs-skills",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "1b6f82e889d19d305e38e35594de08eca0242321f353cafa4cf5e61dd3aa1a73"
+    },
+    "nightingale-karaoke": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nightingale-karaoke/SKILL.md",
+      "computedHash": "a36717c164448d66c1216a21a584cab6de5099d5eb4bf354735df9026d90072a"
+    },
+    "nothing-ever-happens-polymarket-bot": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nothing-ever-happens-polymarket-bot/SKILL.md",
+      "computedHash": "2a0969e785d7ea8e47ab500f11c06d2b35b1efbee6322c42cf89268795a4a583"
+    },
+    "ntwarden-windows-analysis-toolkit": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ntwarden-windows-analysis-toolkit/SKILL.md",
+      "computedHash": "4c7d3692fffab34d39ee689f50e56a05cfa56cca22ede405ca5074ae3cc542b8"
+    },
+    "nvidia-nemoclaw": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nvidia-nemoclaw/SKILL.md",
+      "computedHash": "6932608be46d8296e3e66d4e5ce0a491a10c188fb734c09e497c2734ba6458f8"
+    },
+    "obliteratus-abliteration": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/obliteratus-abliteration/SKILL.md",
+      "computedHash": "34b9a9001055fb83ca5dd72e82ab282a5d201e5a3e394528f4198802c6fb758c"
+    },
+    "oh-story-claudecode-writing": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/oh-story-claudecode-writing/SKILL.md",
+      "computedHash": "3b1ae82aa1c3c8f19ef690eba31468d13e82d7add22be0f4653274fe085f2b3a"
+    },
+    "omnivoice-tts": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/omnivoice-tts/SKILL.md",
+      "computedHash": "72d6d9a20ec40022c3ca65f379ae673e316475a7edd18a5a77d3bd10af9d07eb"
+    },
+    "open-agent-sdk": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/open-agent-sdk/SKILL.md",
+      "computedHash": "000c123b7a238d90f9a0e431f9a07767ff9c9dbd0c8a9f9b3679345d721ef2ce"
+    },
+    "open-autoglm-phone-agent": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/open-autoglm-phone-agent/SKILL.md",
+      "computedHash": "6526b2ce6c6b0d86eade5d24647888faea8df6981e4f6964cd484cdc742a540d"
+    },
+    "open-multi-agent-orchestration": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/open-multi-agent-orchestration/SKILL.md",
+      "computedHash": "0a364540ec3d3c9e973155f45c8f1e9ff3d4e2a76b445c8951d4f1c290a0a6dd"
+    },
+    "open-pencil-design-editor": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/open-pencil-design-editor/SKILL.md",
+      "computedHash": "e47b221ed9154b662adde8b70b1ba64f139045af2cc18d0cdc4fda3a7e6c7ca6"
+    },
+    "openai-privacy-filter": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openai-privacy-filter/SKILL.md",
+      "computedHash": "a0f17cc19f18b9c2a59a88597f4fbac1b485ad03a19308c77c40b9ac6887e486"
+    },
+    "openai-symphony-autonomous-agents": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openai-symphony-autonomous-agents/SKILL.md",
+      "computedHash": "cc11e85c9eb2124b3e7970cb73453a0033d2f6425ca85aba1564eda5cb7744de"
+    },
+    "openclaude-multi-llm": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openclaude-multi-llm/SKILL.md",
+      "computedHash": "4190acac2f4a46733844c7b21d054a3cdeaf605faa0d3d5d49a129607ee8c48d"
+    },
+    "openclaw-config": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openclaw-config/SKILL.md",
+      "computedHash": "8511022469f59d2540ba78ee7bf59b318a7a992ea2dd70caa57bd7d18ddb679c"
+    },
+    "openclaw-control-center": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openclaw-control-center/SKILL.md",
+      "computedHash": "46c1810c429d0d78a02046a78e35e9c4daed90ecefd5d9c484a4ef67f5e8114c"
+    },
+    "openclaw-rl-training": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openclaw-rl-training/SKILL.md",
+      "computedHash": "eb98a73aed690f9abc27e2c0bbccaed35f6e25d4e1e210dd1169ce513c3ec032"
+    },
+    "opencli-rs-web-scraper": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/opencli-rs-web-scraper/SKILL.md",
+      "computedHash": "2d5dcd1a852a21bdf2a4f556acc682d8598d3c62331b9fa971d581cce36be9e8"
+    },
+    "opencli-web-automation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/opencli-web-automation/SKILL.md",
+      "computedHash": "4c4f9ceafb6b33def19854304a697d3c54ff12865e0653957961b3ef1d7bb794"
+    },
+    "openduck-distributed-duckdb": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openduck-distributed-duckdb/SKILL.md",
+      "computedHash": "55ef23209d73004d3b8e610c42560ec32fd1e6a22eb66a9338aa6b65d54b4639"
+    },
+    "opengame-agentic-game-creation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/opengame-agentic-game-creation/SKILL.md",
+      "computedHash": "1938322481b6eceaefa55c280dd60077482d347f370efe3de22aa87d5803e73f"
+    },
+    "openhanako-personal-ai-agent": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openhanako-personal-ai-agent/SKILL.md",
+      "computedHash": "4668a62b9426aecc718834efba32b369bcc4feb6f921337838bd477471ba843b"
+    },
+    "openless-voice-input": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openless-voice-input/SKILL.md",
+      "computedHash": "6d7cc4b82d2b323f646b4cf84bdf58a9fadda6a6bc3243db72945f48a907f2a7"
+    },
+    "openmaic-classroom": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openmaic-classroom/SKILL.md",
+      "computedHash": "beb3ad628c15fd173fc25d70a160ab69f1724e4d0eff801ab7a08dbd0e6750a5"
+    },
+    "openviking-context-database": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/openviking-context-database/SKILL.md",
+      "computedHash": "2100408ca56a73a0bc926121f678c75d26a09bf8c57070b2ace51ebf5b1c4f4f"
+    },
+    "oransim-causal-marketing-twin": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/oransim-causal-marketing-twin/SKILL.md",
+      "computedHash": "21dd15ee7b011426ac34611c0297a2eee68645a62febda2c9367a4f2d691c18a"
+    },
+    "palantir-for-family-trips": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/palantir-for-family-trips/SKILL.md",
+      "computedHash": "4764ccf5297b7cd5aa383e86d92cb069f05e5c69e0f58e45c9fa7ef9b08ee6bd"
+    },
+    "paper2code-arxiv-implementation": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/paper2code-arxiv-implementation/SKILL.md",
+      "computedHash": "ca10bbaf9c696e33f1f427b54eb592ab08352f6114f4990a4cb6d00012126a61"
+    },
+    "paperclip-ai-orchestration": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/paperclip-ai-orchestration/SKILL.md",
+      "computedHash": "f84c79e795d1b5f5eb5f9171390a7aa5d8dc360ff98e5c1ee8d141844798be02"
+    },
+    "parlor-on-device-ai": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/parlor-on-device-ai/SKILL.md",
+      "computedHash": "790d94e654ce1680eaeb59ec9fc6b9c16019359656e12e5a4eecf8f8c846085d"
+    },
+    "permiso-accessibility-permissions": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/permiso-accessibility-permissions/SKILL.md",
+      "computedHash": "2e3974e68d0b7e0f4a0fa3e766b830e73163cb80a3fc2c6ebd02984a2c38e7b0"
+    },
+    "pgmicro-postgres-sqlite": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pgmicro-postgres-sqlite/SKILL.md",
+      "computedHash": "d888c0f82befa7c86288ffb088a3e6507d51677430b764f9849844eb5b5cb305"
+    },
+    "pgque-postgres-queue": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pgque-postgres-queue/SKILL.md",
+      "computedHash": "dc89fb47b017ae280661ad8211b157c69b316ef73619e046eaa459264eac72fd"
+    },
+    "phantom-ai-coworker": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/phantom-ai-coworker/SKILL.md",
+      "computedHash": "9aa3aa4deb797101bcfc053aab99e38736ee97d211016231bd1d4b388670456d"
+    },
+    "picoclaw-ai-assistant": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/picoclaw-ai-assistant/SKILL.md",
+      "computedHash": "6dad9fc24048db64a4c44702c30b13b71472134f8ea62a9683479222b973aafd"
+    },
+    "pokeclaw-android-ai-agent": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pokeclaw-android-ai-agent/SKILL.md",
+      "computedHash": "cbb1bd44be548db136015548e963ba67c25e211a367d0df347650d30ec33e8b4"
+    },
+    "posterskill-academic-posters": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/posterskill-academic-posters/SKILL.md",
+      "computedHash": "f4135805f3e92f5b1644540a2f3c648aa53264f5880e442e6b105b1544b2289d"
+    },
+    "ppt-image-first-workflow": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ppt-image-first-workflow/SKILL.md",
+      "computedHash": "b3fca0ed7738cfc7759671447df58ecac1015345efe73184eafc3aa59896ec1f"
+    },
+    "pretext-text-measurement": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pretext-text-measurement/SKILL.md",
+      "computedHash": "c3d2c184cafa7227ce457095c603f1a2e0aa5d3786d201b01d86db0f528bdcc7"
+    },
+    "privacy-parser-pii-extraction": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/privacy-parser-pii-extraction/SKILL.md",
+      "computedHash": "cd6b41208b06e9943087d2e5d4185015784851a9be0278285a8e4c4dcc4dbaca"
+    },
+    "progressive-blur-header-swiftui": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/progressive-blur-header-swiftui/SKILL.md",
+      "computedHash": "a527103027702d34460aa666b43f8a94674601bebde6c784d7d2e90dcf6eee94"
+    },
+    "pump-analyzer-solana": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pump-analyzer-solana/SKILL.md",
+      "computedHash": "b45742558ef596ecc6e857b64e3bd5ab7998e83db246e2acb167a1b2fbf4e084"
+    },
+    "puremac-macos-cleaner": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/puremac-macos-cleaner/SKILL.md",
+      "computedHash": "d7b44036e0869260d2ca7ffe225bf88c318952987dc3b4e591767bf4562dc004"
+    },
+    "pyre-code-ml-practice": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pyre-code-ml-practice/SKILL.md",
+      "computedHash": "616eb7565f6729c3da5c02d8c567f3fe9e101bd474bfca4550a77793baceb8aa"
+    },
+    "quien-whois-lookup": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/quien-whois-lookup/SKILL.md",
+      "computedHash": "37d2d61bc4cbb81bdecd48738cb33342b933998acf6e28077a29f96cf2c96b41"
+    },
+    "quip-node-manager": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/quip-node-manager/SKILL.md",
+      "computedHash": "07e89ab59472afb186e78abd196033b112c5d847283e8b1de700d78673cf6d3e"
+    },
+    "rattles-terminal-spinners": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/rattles-terminal-spinners/SKILL.md",
+      "computedHash": "1cf2291f4571d790e8fa4c66b989c1ef259c5391120d68fd93ca6846c7c63edc"
+    },
+    "see-through-anime-layer-decomposition": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/see-through-anime-layer-decomposition/SKILL.md",
+      "computedHash": "7859c107c7bcacbc01e46f113978c4f0a818f698bf3233e97b7946fc4aa2e9b8"
+    },
+    "serve-sim-apple-simulator": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/serve-sim-apple-simulator/SKILL.md",
+      "computedHash": "dfc4c97e1fc447775d68bf759e29ea84847cc6f8ae44ff1fe7fae889522a77c1"
+    },
+    "shannon-ai-pentester": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/shannon-ai-pentester/SKILL.md",
+      "computedHash": "98e621f18e06ed39ca3f709105edf7079df3103195db769700780030dc330ca0"
+    },
+    "sheets-terminal-spreadsheet": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/sheets-terminal-spreadsheet/SKILL.md",
+      "computedHash": "aba072013812c000e2b949f13dcad2e00f2f55525d6b388429ddc06e6b8a6436"
+    },
+    "skillclaw-skill-evolution": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/skillclaw-skill-evolution/SKILL.md",
+      "computedHash": "199a117d3705c39b130128ab158b0b209acf2af3adf315e196d895201e4c436d"
+    },
+    "slug-font-rendering": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/slug-font-rendering/SKILL.md",
+      "computedHash": "1926d6cdbd573d8c154df1e020e89dbd7449b66d60b70847c494ddfcb6e6075c"
+    },
+    "stash-ai-memory": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/stash-ai-memory/SKILL.md",
+      "computedHash": "2835a7b313d62a5d7836f2608f28fbff6ffdcfeed8ecc28cf209c28281f3a52b"
+    },
+    "superlevels-chrome-extension": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/superlevels-chrome-extension/SKILL.md",
+      "computedHash": "7d73da5db487048fa82ebe710f280e476751bb3149e44f74004241a8c975a877"
+    },
+    "syswatch-terminal-diagnostics": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/syswatch-terminal-diagnostics/SKILL.md",
+      "computedHash": "59e429a676617083a299cf1ca22a04ae71df5e8e70424aa9328919aa4678cf6b"
+    },
+    "tailslayer-dram-hedged-reads": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tailslayer-dram-hedged-reads/SKILL.md",
+      "computedHash": "a7b082cd8c8ee1520b62976a2fec94e0d8cd8e492855dae9290ce712d56d0bd7"
+    },
+    "taiwan-equity-research-coverage": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/taiwan-equity-research-coverage/SKILL.md",
+      "computedHash": "b883e407686d2e42e26fc795dddb8d5930a2de9e5fe50d897b29986e058efe16"
+    },
+    "taiwan-md-knowledge-base": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/taiwan-md-knowledge-base/SKILL.md",
+      "computedHash": "7ae9eb79f8d9ec2d78c09aeb7b11f478b6a5a5068fcccbbbf5220b42b14b6034"
+    },
+    "talk-normal-llm-prompt": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/talk-normal-llm-prompt/SKILL.md",
+      "computedHash": "af9398574df4f273f9395180dfc3905408542270ead2082d1f1ff89c69a0abe2"
+    },
+    "tavily-key-generator-proxy": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tavily-key-generator-proxy/SKILL.md",
+      "computedHash": "8d8fc6281e1b8d43a87a50da0a413f432989a5e7a0a0d6d9f748ae146baef248"
+    },
+    "tech-doc-style-chinese": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tech-doc-style-chinese/SKILL.md",
+      "computedHash": "7d44a0302b5f6d13217188153a178961605459343d37278f48f2b299a1229646"
+    },
+    "text-to-cad-harness": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/text-to-cad-harness/SKILL.md",
+      "computedHash": "5dff45f686db7621ffe9eb43c5e7140fdd9532563a8c35fcdbadbd2eb2e8397d"
+    },
+    "tiangolo-library-skills": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tiangolo-library-skills/SKILL.md",
+      "computedHash": "6abd7f703c32bee2a34a7a09a1c7741cadcc59f3defbd324da5c73e09025d007"
+    },
+    "tilekernels-gpu-kernels": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tilekernels-gpu-kernels/SKILL.md",
+      "computedHash": "2d104b58da5b8ca47e96322568130a545f24b4970b36e9d01a03c0cd5f41bf3c"
+    },
+    "token-dashboard-claude-analytics": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/token-dashboard-claude-analytics/SKILL.md",
+      "computedHash": "6f19133bc1992fa167a84c65c23228d45fc6d9e551cf043c1fa218d7284985f7"
+    },
+    "tong-jincheng-interpersonal-skill": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tong-jincheng-interpersonal-skill/SKILL.md",
+      "computedHash": "59f6f027497fdf4766f92fcb2529e5fa703943bd0c7153767687ea3b4cea20d4"
+    },
+    "tong-jincheng-relationship-skill": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tong-jincheng-relationship-skill/SKILL.md",
+      "computedHash": "273e083ca16a9c96c873e495c49988c1c0dcdd4083cddb24f8599a93e1cf883e"
+    },
+    "toon-format": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/toon-format/SKILL.md",
+      "computedHash": "2ac046be03499ef14ff256681a1eb8c959d244c5b32b935f1725a546bc6bf41f"
+    },
+    "translate-book-parallel": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/translate-book-parallel/SKILL.md",
+      "computedHash": "bdbcee599f7cd24d6461523e7a1837bc1db7bb77f0494831f500d37ab8aaa632"
+    },
+    "tribev2-brain-encoding": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tribev2-brain-encoding/SKILL.md",
+      "computedHash": "00d21be22c27c13394e99f57808e9293336a2c79e7e11dc9b013c46e5a82f195"
+    },
+    "trump-code-market-signals": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/trump-code-market-signals/SKILL.md",
+      "computedHash": "1f137f307c969e3008370fc4a72596c9c934e57b77b4cac076194fa9ab12b870"
+    },
+    "type4me-macos-voice-input": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/type4me-macos-voice-input/SKILL.md",
+      "computedHash": "15cb6a1b3823def52c41c224a6ecce59b4c678956f59dd38a2c8975ee00c612c"
+    },
+    "ui-ux-pro-max-skill": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ui-ux-pro-max-skill/SKILL.md",
+      "computedHash": "9a3abc6e651685977b9bd3c9cf635607a6ac8f08c66c3727544438456adf9ef9"
+    },
+    "understand-anything-knowledge-graph": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/understand-anything-knowledge-graph/SKILL.md",
+      "computedHash": "f9534ff5617d2899d308c9f3ecb6d1912c7c3710c61130e0888334e039eb86c6"
+    },
+    "unit-3-hyprland-nier-rice": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/unit-3-hyprland-nier-rice/SKILL.md",
+      "computedHash": "fd7f60253b6507270fa41c64e79429dad189463510258919bb2b1a3a3abf0afa"
+    },
+    "uzi-skill-stock-analyzer": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/uzi-skill-stock-analyzer/SKILL.md",
+      "computedHash": "086628f182847a18d1a4f539430ccaeb1f91670013df037c00a7f04620b72e07"
+    },
+    "vercel-labs-emulate": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vercel-labs-emulate/SKILL.md",
+      "computedHash": "1e08fb850c314443b4e4329a7b8051b275768eb56dd5bbeed880c90c5c0bae7d"
+    },
+    "vercel-xhttp-relay": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vercel-xhttp-relay/SKILL.md",
+      "computedHash": "024aeb98e45f8f1e03b80afb17f26c9148db9c72bbf4900315b26efeaa3cb511"
+    },
+    "vinext-vite-nextjs": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vinext-vite-nextjs/SKILL.md",
+      "computedHash": "28a395bb50e87da0d78d46d6e826351a36ed358193a46d579991902247a80188"
+    },
+    "voicebox-voice-synthesis": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/voicebox-voice-synthesis/SKILL.md",
+      "computedHash": "7791341f2f4a40679bf8406b087c425e49e938fb9aac978adc4e2f125de21467"
+    },
+    "wanman-agent-matrix": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/wanman-agent-matrix/SKILL.md",
+      "computedHash": "ea2aff4b62733b19a9686d4b7682cd2991c264e9b34b7aa483c08a5c26b1fb38"
+    },
+    "web-access-claude-skill": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-access-claude-skill/SKILL.md",
+      "computedHash": "523ccdf76aadf0147c778a4989021f55b13c4300a07b55164f9fab9be93291d8"
+    },
+    "webphysics-avbd-engine": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/webphysics-avbd-engine/SKILL.md",
+      "computedHash": "c57c8f8fc4418d63cb4bae26bd02994c24e4bcb8f4a2d5c636acbef5b7a68186"
+    },
+    "weclaw-wechat-ai-bridge": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/weclaw-wechat-ai-bridge/SKILL.md",
+      "computedHash": "c4b4c281d032e6a945597987c789a1b46ad78ce31a57c5b8c82bc67ad9df5554"
+    },
+    "weft-ai-language": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/weft-ai-language/SKILL.md",
+      "computedHash": "1e64ace28e77b203f4391aae76558f887b131c5ad6f47b2ebc0762e86d1d84be"
+    },
+    "weixin-agent-sdk": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/weixin-agent-sdk/SKILL.md",
+      "computedHash": "f8c5cae1a6ee7c4d06688afcc0bf0db12801e91cb2e0b7080baee39391d2437f"
+    },
+    "wewrite-wechat-ai-publishing": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/wewrite-wechat-ai-publishing/SKILL.md",
+      "computedHash": "fdc09f467db766ffc3268b0526dff851522efe83d2a708a0034f057368725937"
+    },
+    "whatcable-macos-usb-inspector": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/whatcable-macos-usb-inspector/SKILL.md",
+      "computedHash": "04abef6d6e125ac2a60b89640900af925c3b0500e7e9050b49028b3daf9d50a1"
+    },
+    "wildworld-dataset": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/wildworld-dataset/SKILL.md",
+      "computedHash": "e2b6d86b707898061e0a3982ad24df509197afecb14e536cfafe2ea83be5929d"
+    },
+    "witr-process-inspector": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/witr-process-inspector/SKILL.md",
+      "computedHash": "04ec6c18b05b5f648ea0e0c9801ccd1b52745cd9639abdabc52b66174682fd47"
+    },
+    "worldmonitor-intelligence-dashboard": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/worldmonitor-intelligence-dashboard/SKILL.md",
+      "computedHash": "41c1a48b27032a1b81bb8e93044c83b20a1ed4afad64b4dfa50b5f8b75ddf7e7"
+    },
+    "wterm-web-terminal": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/wterm-web-terminal/SKILL.md",
+      "computedHash": "074543293f623ef07e4d600e7d541f60f4ee48a37ab6aa4ba88d0d56f9e10227"
+    },
+    "wx-favorites-report": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/wx-favorites-report/SKILL.md",
+      "computedHash": "9ea540aa416a3c14114cb858b0f3de5bc51da783472d8e4a40ab06ea58b2612e"
+    },
+    "x-mentor-skill-nuwa": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/x-mentor-skill-nuwa/SKILL.md",
+      "computedHash": "6c16e5f6dcb4807e2402c4407fb6ea84bf6b341e8e84f2565a2681eaffb77d87"
+    },
+    "xata-postgres-platform": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/xata-postgres-platform/SKILL.md",
+      "computedHash": "756c60077b701ea1f68bbe952473245e983eec4f3f29466bb91c99fe22ce6cc7"
+    },
+    "yourvpndead-vpn-detection": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/yourvpndead-vpn-detection/SKILL.md",
+      "computedHash": "ba74dc05d7986d42e79232a513245c962e4fd46c91f0340c83755c98611e154b"
+    },
+    "zeroboot-vm-sandbox": {
+      "source": "aradotso/trending-skills",
+      "sourceType": "github",
+      "skillPath": "skills/zeroboot-vm-sandbox/SKILL.md",
+      "computedHash": "0fba742555067c93e9e936edd7fc2b01ea019026b8cd9338a3c504de1129fec0"
+    }
+  }
+}
