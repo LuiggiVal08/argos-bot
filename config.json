@@ -1,0 +1,27 @@
+{
+  "environment_mode": "PAPER_TRADING",
+  "risk_pct": 0.01,
+  "drawdown_pct": 0.05,
+  "exchanges": [
+    {
+      "id": "binance",
+      "type": "perpetual_futures",
+      "testnet": true
+    }
+  ],
+  "symbols": [
+    "BTC/USDT",
+    "ETH/USDT"
+  ],
+  "timeframes": [
+    "1m",
+    "5m",
+    "15m",
+    "1h",
+    "4h",
+    "1d"
+  ],
+  "redis": {
+    "url": "redis://redis:6379"
+  }
+}
