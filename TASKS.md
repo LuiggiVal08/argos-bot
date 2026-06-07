@@ -158,7 +158,11 @@ _Ninguno actualmente._
 - ✅ Deps añadidas: `@nestjs/config@3.2.0` (3.1.x choca con `reflect-metadata@0.2.2`).
 - ⏭ H1-009 (integration) y H1-010 (benchmark) requieren broker reachable; no ejecutados en sandbox.
 - 🐛 Bug detectado y corregido en `FlushBufferUseCase`: `drain()` vaciaba el buffer y al fallar el primer publish solo re-bufeaba ese tick, perdiendo los siguientes. Ahora re-bufea el fallido + todos los restantes en orden.
-- 📦 Commit en `feature/h1-tick-pipeline` pendiente de push (esperando confirmación del usuario).
+- ✅ Push de `feature/h1-tick-pipeline` a `origin` (7 commits, todos conventional).
+- ✅ **PR #1 mergeado a `dev`** (merge commit `f053fc7`, sin squash — los 7 commits de H1 preservados para bisect y trazabilidad).
+- ✅ Rama `feature/h1-tick-pipeline` borrada en local y en `origin`.
+- ✅ PR body archivado en `docs/prs/done/h1-tick-pipeline.md` para referencia histórica.
+- 🎯 **PR #1 (H1) mergeado a dev** — primera historia cerrada del proyecto.
 - 🔒 Sandbox: registry npm ~14s/ping, install tomó ~5 min; tests/lint corren offline en ~5s cada uno.
 
 ### 2026-06-06 — Sesión de setup
