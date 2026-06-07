@@ -81,18 +81,23 @@ last_updated: 2026-06-07
 
 ---
 
-## ⬜ H2 — Position Sizing (≤1% del free balance)
+## 🟡 H2 — Position Sizing (≤1% del free balance)
 
-> spec.md §5 Historia 2. Calcular tamaño de posición: `size = (free_balance * risk_pct) / atr`.
+> spec.md §5 Historia 2. Capa de Dominio calcula `units = (free_balance * risk_pct) / atr`. SL dinámico a distancia ATR. Sad path: CCXT timeout o balance=0 → abort; size < min_lot → descartar.
 
-- [ ] H2-001 — Implementar ATR en `analytics-engine/app/domain/indicators/atr.py`
-- [ ] H2-002 — Implementar `position_size` con validación (rechazar `risk_pct > 0.02`)
-- [ ] H2-003 — Tests unitarios (casos límite: balance=0, atr=0, risk_pct>2%)
-- [ ] H2-004 — Wire-up al ejecutor (tool `risk_position_size` ya existe)
+- [ ] H2-001 — Domain VOs: `Atr`, `RiskPct`, `PositionSize` (validación: atr>0, 0<risk_pct≤0.02, units≥0)
+- [ ] H2-002 — Domain entity: `RiskCalculator.calculate(free_balance, atr, risk_pct) → PositionSize`
+- [ ] H2-003 — Application ports: `BalanceProvider`, `AtrCalculator`, `MinLotProvider` (Protocol)
+- [ ] H2-004 — Application use case: `ComputePositionSizeUseCase` con CCXT-error handling + min_lot check
+- [ ] H2-005 — Infrastructure adapters: `TaAtrCalculator` (lib `ta`), `CcxtBalanceProvider`, `MockBalanceProvider`, `CcxtMinLotProvider`
+- [ ] H2-006 — API endpoint: `POST /risk/position-size` con DI composition root
+- [ ] H2-007 — Tests unit (VOs + entity + use case con mocks) + integration (TA lib real)
+- [ ] H2-008 — Validation: pytest, mypy, arch_lint, secret_scan
+- [ ] H2-009 — Commit + PR body (`docs/prs/h2-position-sizing.md`)
 
-**Progreso**: 0/4 = **0%**
+**Progreso**: 0/9 = **0%**
 **Dependencias**: ninguna
-**Notas**: el tool `risk_position_size` ya valida y retorna JSON; H2-002 lo implementa dentro del analytics-engine (versión persistente), H2-004 lo conecta.
+**Notas**: el tool opencode `risk_position_size` ya implementa la fórmula base (H2-002 lo institucionaliza en el engine). Min lot check es la pieza nueva que el tool no tenía. Integration con strategy/IA queda para historias posteriores.
 
 ---
 

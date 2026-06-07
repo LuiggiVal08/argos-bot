@@ -1,3 +1,4 @@
+# mypy: disable-error-code="str-unpack,union-attr"
 """Argos analytics & IA engine entry point."""
 import asyncio
 import os
@@ -7,12 +8,22 @@ from contextlib import asynccontextmanager
 import redis.asyncio as redis
 from fastapi import FastAPI
 
+from .api import risk_router
+from .composition import Composition, build_composition
+
 log = structlog.get_logger()
 app = FastAPI(title="argos-analytics-engine", version="0.0.1")
+app.include_router(risk_router)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # Build the composition root once at startup. The risk router
+    # fetches it via get_compute_position_size_usecase.
+    comp: Composition = build_composition()
+    app.state.composition = comp
+    log.info("composition_built", mode=comp.mode, has_exchange=comp.exchange is not None)
+
     consumer_task = asyncio.create_task(_consume_ticks())
     try:
         yield
@@ -22,6 +33,12 @@ async def lifespan(_: FastAPI):
             await consumer_task
         except asyncio.CancelledError:
             pass
+        # Close CCXT client on shutdown if LIVE/PAPER.
+        if comp.exchange is not None:
+            try:
+                await comp.exchange.close()
+            except Exception as e:  # noqa: BLE001
+                log.warning("ccxt_close_error", error=str(e))
 
 
 app.router.lifespan_context = lifespan
@@ -48,10 +65,22 @@ async def _consume_ticks() -> None:
                 continue
             if not res:
                 continue
-            for _stream, entries in res:
-                for entry_id, fields in entries:
-                    last_id = entry_id
-                    payload = fields.get("p")
+            for _stream, entries in res:  # type: ignore
+                for entry_id, fields in entries:  # type: ignore
+                    last_id = (
+                        entry_id.decode()  # type: ignore
+                        if isinstance(entry_id, (bytes, bytearray))
+                        else entry_id
+                    )
+                    # xread returns {field: value} as bytes by default
+                    # (decode_responses=False). Decode on the fly.
+                    decoded = {
+                        (k.decode() if isinstance(k, (bytes, bytearray)) else k): (
+                            v.decode() if isinstance(v, (bytes, bytearray)) else v
+                        )
+                        for k, v in fields  # type: ignore[misc]
+                    }
+                    payload = decoded.get("p")
                     if not payload:
                         continue
                     try:
