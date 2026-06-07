@@ -24,8 +24,8 @@ last_updated: 2026-06-07
 |-------|-------------------------|--------|--------|--------|
 | Setup | Infra y tools           | ✅     | 100%   | 14/14  |
 | H1    | Tick Pipeline (<2ms)    | ✅     | 100%   | 11/11  |
-| H2    | Position Sizing (≤1%)   | ⬜     | 0%     | 0/4    |
-| H3    | Circuit Breaker (5%)    | ⬜     | 0%     | 0/4    |
+| H2    | Position Sizing (≤1%)   | ✅     | 100%   | 9/9    |
+| H3    | Circuit Breaker (5%)    | 🟡     | 0%     | 0/9    |
 | H4    | OWASP Incident Response | ⬜     | 0%     | 0/4    |
 | H5    | Secrets & Env Mode      | ⬜     | 0%     | 0/4    |
 
@@ -81,38 +81,43 @@ last_updated: 2026-06-07
 
 ---
 
-## 🟡 H2 — Position Sizing (≤1% del free balance)
+## ✅ H2 — Position Sizing (≤1% del free balance)
 
 > spec.md §5 Historia 2. Capa de Dominio calcula `units = (free_balance * risk_pct) / atr`. SL dinámico a distancia ATR. Sad path: CCXT timeout o balance=0 → abort; size < min_lot → descartar.
 
-- [ ] H2-001 — Domain VOs: `Atr`, `RiskPct`, `PositionSize` (validación: atr>0, 0<risk_pct≤0.02, units≥0)
-- [ ] H2-002 — Domain entity: `RiskCalculator.calculate(free_balance, atr, risk_pct) → PositionSize`
-- [ ] H2-003 — Application ports: `BalanceProvider`, `AtrCalculator`, `MinLotProvider` (Protocol)
-- [ ] H2-004 — Application use case: `ComputePositionSizeUseCase` con CCXT-error handling + min_lot check
-- [ ] H2-005 — Infrastructure adapters: `TaAtrCalculator` (lib `ta`), `CcxtBalanceProvider`, `MockBalanceProvider`, `CcxtMinLotProvider`
-- [ ] H2-006 — API endpoint: `POST /risk/position-size` con DI composition root
-- [ ] H2-007 — Tests unit (VOs + entity + use case con mocks) + integration (TA lib real)
-- [ ] H2-008 — Validation: pytest, mypy, arch_lint, secret_scan
-- [ ] H2-009 — Commit + PR body (`docs/prs/h2-position-sizing.md`)
+- [x] H2-001 — Domain VOs: `Atr`, `RiskPct`, `PositionSize` (validación: atr>0, 0<risk_pct≤0.02, units≥0)
+- [x] H2-002 — Domain entity: `RiskCalculator.calculate(free_balance, atr, risk_pct) → PositionSize`
+- [x] H2-003 — Application ports: `BalanceProvider`, `AtrCalculator`, `MinLotProvider` (Protocol)
+- [x] H2-004 — Application use case: `ComputePositionSizeUseCase` con CCXT-error handling + min_lot check
+- [x] H2-005 — Infrastructure adapters: `TaAtrCalculator` (lib `ta`), `CcxtBalanceProvider`, `MockBalanceProvider`, `CcxtMinLotProvider`
+- [x] H2-006 — API endpoint: `POST /risk/position-size` con DI composition root
+- [x] H2-007 — Tests unit (VOs + entity + use case con mocks) + integration (TA lib real)
+- [x] H2-008 — Validation: pytest (43 passed, 1 skipped), mypy clean, arch_lint clean, secret_scan clean
+- [x] H2-009 — Commit + PR body (`docs/prs/h2-position-sizing.md`); **PR #2 mergeado a dev**
 
-**Progreso**: 0/9 = **0%**
+**Progreso**: 9/9 = **100%**
 **Dependencias**: ninguna
 **Notas**: el tool opencode `risk_position_size` ya implementa la fórmula base (H2-002 lo institucionaliza en el engine). Min lot check es la pieza nueva que el tool no tenía. Integration con strategy/IA queda para historias posteriores.
 
 ---
 
-## ⬜ H3 — Circuit Breaker (5% drawdown diario)
+## 🟡 H3 — Circuit Breaker (5% drawdown diario)
 
-> spec.md §5 Historia 3. Cortar operativa si pérdida diaria ≥ 5% del balance de apertura UTC 00:00.
+> spec.md §5 Historia 3. Cortar operativa si pérdida diaria ≥ 5% del balance de apertura UTC 00:00. Acciones: cancelar órdenes, cerrar posiciones a mercado, `ENVIRONMENT_MODE=PASIVO`, halt loop, log crítico.
 
-- [ ] H3-001 — Tracker de P&L diario (snapshot UTC 00:00 + delta intradía)
-- [ ] H3-002 — `drawdown_check` con umbrales SAFE / WARN / TRIP
-- [ ] H3-003 — Acciones de disparo: cancelar órdenes, cerrar posiciones, `ENVIRONMENT_MODE=PASIVO`
-- [ ] H3-004 — Tests SAFE / WARN (3% < 5%) / TRIP (5% ≥)
+- [ ] H3-001 — Domain VOs: `DrawdownSnapshot`, `DrawdownVerdict`, `TripAction`
+- [ ] H3-002 — Domain entity: `CircuitBreaker.evaluate(snapshot) → verdict` (SAFE/WARN/TRIP) + `should_reset_utc(now)`
+- [ ] H3-003 — Application ports: `TradeJournal`, `ExchangeOrderClient`, `EnvironmentModeWriter`, `DrawdownSnapshotRepo`
+- [ ] H3-004 — Application use cases: `CheckDrawdownUseCase`, `TripCircuitBreakerUseCase`, `OpenDayUseCase`
+- [ ] H3-005 — Infrastructure: `InMemoryTradeJournal`, `InMemorySnapshotRepo`, `CcxtOrderClient`, `FileEnvironmentModeWriter`
+- [ ] H3-006 — API: `GET /risk/drawdown`, `POST /risk/drawdown/check`, `POST /risk/day/open`
+- [ ] H3-007 — Tests unit + integration
+- [ ] H3-008 — Validation: pytest, mypy, arch_lint, secret_scan
+- [ ] H3-009 — Commit + PR title/description
 
-**Progreso**: 0/4 = **0%**
-**Dependencias**: H5-003 (env mode)
-**Notas**: tool `risk_drawdown_check` ya existe con la lógica SAFE/WARN/TRIP; H3 lo institucionaliza dentro del engine.
+**Progreso**: 0/9 = **0%**
+**Dependencias**: H5-003 (env mode write file/secret) — H3 escribe `ENVIRONMENT_MODE=PASIVO` via port; H5 controla el sad path
+**Notas**: tool opencode `risk_drawdown_check` ya tiene SAFE/WARN/TRIP; H3 la institucionaliza y agrega las 4 acciones de disparo. Reset diario via endpoint `POST /risk/day/open`; scheduler cron es H3-FU1.
 
 ---
 
