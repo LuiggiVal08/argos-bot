@@ -77,6 +77,12 @@ class LivePosition:
             return price <= self.sl_price
         return price >= self.sl_price
 
+    def compute_pnl_at(self, price: Decimal) -> Decimal:
+        """Compute P&L if position were closed at `price`."""
+        if self.side == OrderSide.BUY:
+            return (price - self.entry_price) * self.units
+        return (self.entry_price - price) * self.units
+
     def is_tp_hit(self, price: Decimal) -> bool:
         if self.tp_price is None:
             return False
