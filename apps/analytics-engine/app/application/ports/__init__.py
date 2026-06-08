@@ -17,17 +17,20 @@ from .data_preprocessor import (
     PreprocessingError,
 )
 from .feature_analyzer import AnalysisError, FeatureAnalyzer
+from .backtest_reporter import BacktestReporter, MetricsCalculator
 from .incident_reporter import IncidentReporter
 from .incident_repository import IncidentRepository
 from .min_lot_provider import MarketConstraints, MinLotProvider, MinLotProviderError
 from .model_predictor import ModelPredictor, PredictionError
 from .model_trainer import ModelTrainer, TrainingError
 from .ohlcv_source import OhlcvSource, OhlcvSourceError
+from .strategy import Strategy, StrategyRegistry
 
 __all__ = [
     "AnalysisError",
     "AtrCalculator",
     "AtrCalculatorError",
+    "BacktestReporter",
     "BalanceProvider",
     "BalanceProviderError",
     "CheckpointIOError",
@@ -39,6 +42,7 @@ __all__ = [
     "IncidentRepository",
     "InsufficientDataError",
     "MarketConstraints",
+    "MetricsCalculator",
     "MinLotProvider",
     "MinLotProviderError",
     "ModelPredictor",
@@ -47,5 +51,7 @@ __all__ = [
     "OhlcvSourceError",
     "PredictionError",
     "PreprocessingError",
+    "Strategy",
+    "StrategyRegistry",
     "TrainingError",
 ]
