@@ -19,6 +19,11 @@ from .train_model import (
     TrainModelResult,
     TrainModelUseCase,
 )
+from .run_backtest import (
+    RunBacktestError,
+    RunBacktestResult,
+    RunBacktestUseCase,
+)
 from .trip_circuit_breaker import (
     TripCircuitBreakerUseCase,
     TripCircuitBreakerError,
@@ -40,6 +45,9 @@ __all__ = [
     "PredictSignalResult",
     "PredictSignalUseCase",
     "ReportIncidentUseCase",
+    "RunBacktestError",
+    "RunBacktestResult",
+    "RunBacktestUseCase",
     "TrainModelError",
     "TrainModelResult",
     "TrainModelUseCase",

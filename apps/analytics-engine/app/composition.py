@@ -28,6 +28,7 @@ from .application.ports.min_lot_provider import (
     MarketConstraints,
     MinLotProvider,
 )
+from .application.ports.ohlcv_source import OhlcvSource
 from .application.ports.trade_journal import (
     TradeJournal,
 )
@@ -40,6 +41,7 @@ from .application.ports.environment_mode_writer import (
 from .application.ports.drawdown_snapshot_repo import (
     DrawdownSnapshotRepo,
 )
+from .application.ports.backtest_reporter import BacktestReporter, MetricsCalculator
 from .application.ports.incident_reporter import IncidentReporter
 from .application.ports.incident_repository import IncidentRepository
 from .application.use_cases.check_drawdown import CheckDrawdownUseCase
@@ -51,6 +53,7 @@ from .application.use_cases.open_day import OpenDayUseCase
 from .application.use_cases.place_order import PlaceOrderUseCase
 from .application.use_cases.predict_signal import PredictSignalUseCase
 from .application.use_cases.report_incident import ReportIncidentUseCase
+from .application.use_cases.run_backtest import RunBacktestUseCase
 from .application.use_cases.train_model import TrainModelUseCase
 from .application.use_cases.trip_circuit_breaker import (
     TripCircuitBreakerUseCase,
@@ -64,6 +67,8 @@ from .infrastructure.env_mode.file_env_mode_writer import (
 )
 from .infrastructure.exchange.ccxt_order_client import CcxtOrderClient
 from .infrastructure.indicators.ta_atr_calculator import TaAtrCalculator
+from .infrastructure.backtest.file_reporter import FileBacktestReporter
+from .infrastructure.backtest.metrics_calculator import SimpleMetricsCalculator
 from .infrastructure.journal.in_memory_snapshot_repo import InMemorySnapshotRepo
 from .infrastructure.journal.in_memory_trade_journal import InMemoryTradeJournal
 from .infrastructure.market.ccxt_min_lot_provider import CcxtMinLotProvider
@@ -74,6 +79,7 @@ from .infrastructure.monitoring.logging_incident_reporter import (
     LoggingIncidentReporter,
 )
 from .infrastructure.ohlcv.ccxt_ohlcv_source import ccxt_ohlcv_source
+from .infrastructure.strategies.registry import StrategyDictRegistry
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -378,6 +384,51 @@ def get_list_incidents_usecase(
     request: Request,
 ) -> ListIncidentsUseCase:
     return _comp(request).list_incidents
+
+
+# H8 — Backtest use cases (cached in app.state) --------------------------------
+
+
+def get_backtest_usecase(request: Request) -> RunBacktestUseCase:
+    """Return the RunBacktestUseCase, cached in app.state."""
+    cached: RunBacktestUseCase | None = getattr(request.app.state, "backtest_usecase", None)
+    if cached is not None:
+        return cached
+
+    comp = _comp(request)
+
+    if comp.mode == "BACKTESTING":
+        ohlcv_source: OhlcvSource = _FakeOhlcvSource()  # type: ignore[arg-type]
+    else:
+        exchange = comp.exchange
+        if exchange is None:
+            raise RuntimeError("exchange is None in non-BACKTESTING mode")
+        ohlcv_source = _CcxtOhlcvAdapter(exchange)
+
+    registry = StrategyDictRegistry()
+    metrics_calc = SimpleMetricsCalculator()
+    reporter: BacktestReporter = FileBacktestReporter()
+
+    use_case = RunBacktestUseCase(
+        ohlcv_source=ohlcv_source,
+        strategy_registry=registry,
+        metrics_calculator=metrics_calc,
+        reporter=reporter,
+    )
+    request.app.state.backtest_usecase = use_case
+    request.app.state.backtest_registry = registry
+    return use_case
+
+
+def get_backtest_registry(request: Request) -> StrategyDictRegistry:
+    """Return the singleton strategy registry."""
+    cached: StrategyDictRegistry | None = getattr(request.app.state, "backtest_registry", None)
+    if cached is not None:
+        return cached
+    get_backtest_usecase(request)
+    cached = getattr(request.app.state, "backtest_registry", None)
+    assert cached is not None
+    return cached
 
 
 # H6 — NovaQuant model use cases (built on demand, cached in app.state) -------
