@@ -6,10 +6,14 @@ The trip use case calls this to:
   - close_all_positions(): flatten every active position with a
     market order.
 
+The order-execution use case (H4) calls:
+  - place_composite_order(): places a market entry + SL + TP
+    bracket order.
+  - place_emergency_market(): last-resort liquidation if SL
+    placement fails after retry exhaustion.
+
 Sad path: any I/O failure (CCXT timeout, exchange 5xx, auth)
-raises ExchangeOrderClientError. The use case treats this as
-a critical abort — partial cancellation is logged and the
-halt step is still attempted.
+raises ExchangeOrderClientError.
 """
 from __future__ import annotations
 
@@ -17,9 +21,30 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Protocol, runtime_checkable
 
+from ...domain.value_objects.order import (
+    CompositeOrder,
+    OrderResult,
+    OrderSide,
+    OrderType,
+)
+
 
 class ExchangeOrderClientError(RuntimeError):
-    """Raised when cancel_all or close_all can't complete."""
+    """Raised when any exchange call can't complete."""
+
+
+class SlPlacementError(ExchangeOrderClientError):
+    """Raised when the stop-loss leg of a composite order fails
+    after retry exhaustion. The market entry was already placed,
+    so the caller MUST issue an emergency close.
+
+    Attributes:
+        entry_order: the successful entry OrderResult.
+    """
+
+    def __init__(self, message: str, entry_order: OrderResult | None = None) -> None:
+        super().__init__(message)
+        self.entry_order = entry_order
 
 
 @dataclass(frozen=True)
@@ -42,4 +67,22 @@ class ExchangeOrderClient(Protocol):
         """Flatten every active position with a market order.
         Returns the list of positions that were closed. Raises
         ExchangeOrderClientError on infrastructure failure."""
+        ...
+
+    async def place_composite_order(
+        self, order: CompositeOrder
+    ) -> OrderResult:
+        """Place a bracket order: market entry + stop loss +
+        take profit linked.
+
+        On entry success but SL failure after retry exhaustion,
+        raises SlPlacementError. The caller must call
+        place_emergency_market to liquidate the position."""
+        ...
+
+    async def place_emergency_market(
+        self, symbol: str, side: OrderSide, amount: Decimal
+    ) -> OrderResult:
+        """Fire-and-forget market order to liquidate a position.
+        No retries. Raises ExchangeOrderClientError on failure."""
         ...

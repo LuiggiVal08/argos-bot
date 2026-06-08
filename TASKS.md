@@ -1,10 +1,10 @@
 ---
 project: argos-bot
-total_tasks: 14
-completed: 14
+total_tasks: 58
+completed: 50
 in_progress: 0
 blocked: 0
-overall_pct: 100
+overall_pct: 86
 last_updated: 2026-06-07
 ---
 
@@ -26,7 +26,8 @@ last_updated: 2026-06-07
 | H1    | Tick Pipeline (<2ms)    | ✅     | 100%   | 11/11  |
 | H2    | Position Sizing (≤1%)   | ✅     | 100%   | 9/9    |
 | H3    | Circuit Breaker (5%)    | ✅     | 100%   | 9/9    |
-| H4    | OWASP Incident Response | ⬜     | 0%     | 0/4    |
+| H4-A  | Order Retry + Emergency | ✅     | 100%   | 7/7    |
+| H4-B  | OWASP Incident Response | ⬜     | 0%     | 0/4    |
 | H5    | Secrets & Env Mode      | ⬜     | 0%     | 0/4    |
 
 ---
@@ -127,7 +128,39 @@ last_updated: 2026-06-07
 
 ---
 
-## ⬜ H4 — OWASP Incident Response (4 fases)
+## ✅ H4-A — Order Retry + Emergency Market
+
+> spec.md §5 Historia 4-A. Order placement with retry logic for stop-loss and emergency market fallback.
+
+**Domain VOs**: `OrderSide`, `OrderType`, `OrderStatus`, `CompositeOrder`, `OrderResult` — con validaciones (entry_amount > 0, enum values).
+
+**Port extension**: `ExchangeOrderClient` → `place_composite_order()` (entry + SL/TP bracket), `place_emergency_market()` (liquidation), `SlPlacementError` carrying `entry_order`.
+
+**Use case**: `PlaceOrderUseCase` — calls `place_composite_order`, catches `SlPlacementError`, issues emergency close on opposite side. If both fail, raises `PlaceOrderError`.
+
+**Infrastructure**: `CcxtOrderClient.place_composite_order` — market entry → SL with exponential backoff (100ms base, max 3 retries, ±20ms jitter) → TP (no retry, non-critical). TP failure silently logged.
+
+**API**: `POST /order/place` — body: `{symbol, side, entry_amount, sl_price?, tp_price?}` → response: `{succeeded, entry_order, emergency_order?}`. Returns 422 on hard errors.
+
+- [x] H4-A-001 — Domain VOs: OrderSide, OrderType, OrderStatus, CompositeOrder (entry_amount > 0), OrderResult
+- [x] H4-A-002 — Extend ExchangeOrderClient port: place_composite_order, place_emergency_market, SlPlacementError with entry_order
+- [x] H4-A-003 — PlaceOrderUseCase: retry catch + emergency fallback
+- [x] H4-A-004 — CcxtOrderClient: place_composite_order (SL retry 3x, TP fire-and-forget), place_emergency_market
+- [x] H4-A-005 — POST /order/place API endpoint
+- [x] H4-A-006 — Tests: 6 unit (happy + sad) + 5 integration (HTTP contract)
+- [x] H4-A-007 — Validation: 108/108 tests, arch_lint PASS, secret_scan clean; branch `feature/h4-a-order-retry` pushed
+
+**Progreso**: 7/7 = **100%**
+**Dependencias**: H3 (CcxtOrderClient port ya existe, composition root ready)
+**Notas**:
+- `SlPlacementError` carries the entry `OrderResult` because the entry was already placed when SL fails; the use case needs it for the response.
+- Emergency side = opposite of entry (BUY → SELL, SELL → BUY).
+- TP failure is non-critical — silently ignored.
+- SL retry: exponential backoff with jitter. If all 3 fail → `SlPlacementError` → use case catches and issues emergency.
+
+---
+
+## ⬜ H4-B — OWASP Incident Response (4 fases)
 
 > spec.md §5 Historia 4. Protocolo OWASP: Detect → Contain → Eradicate → Recover.
 
@@ -164,6 +197,19 @@ _Ninguno actualmente._
 ---
 
 ## Bitácora
+
+### 2026-06-07 — Sesión H4-A: Order Retry + Emergency Market
+- ✅ Branch `feature/h4-a-order-retry` creada desde `dev` (después del merge de H3).
+- ✅ H4-A-001: Domain VOs `OrderSide`, `OrderType`, `OrderStatus`, `CompositeOrder`, `OrderResult` — enfoque hexagonal sin dependencias externas.
+- ✅ H4-A-002: Port `ExchangeOrderClient` extendido con `place_composite_order()`, `place_emergency_market()`, `SlPlacementError` (con `entry_order` carry).
+- ✅ H4-A-003: `PlaceOrderUseCase` implementado — catch `SlPlacementError` → emergency market en lado opuesto.
+- ✅ H4-A-004: `CcxtOrderClient.place_composite_order()` — entry market + SL retry 3x con exponential backoff + jitter + TP fire-and-forget.
+- ✅ H4-A-005: `POST /order/place` endpoint con Pydantic schemas y DI wiring.
+- ✅ H4-A-006: 11 tests nuevos (6 unit + 5 integration). 108 passed / 1 skipped total.
+- 🐛 Bug detectado y corregido en diseño: `SlPlacementError` necesitaba carry `entry_order` porque la entry ya se ejecutó; la excepción se llevaba el resultado de la entry para que el use case lo retorne.
+- ✅ Validación: pytest 108/108, arch_lint PASS, secret_scan clean.
+- ✅ 1 commit conventional, push a `origin/feature/h4-a-order-retry`.
+- 🎯 **H4-A listo para PR.** El usuario abre el PR manualmente en GitHub apuntando a `dev`.
 
 ### 2026-06-07 — Sesión H3: Circuit Breaker
 - ✅ Branch `feature/h3-circuit-breaker` creada desde `dev` (rebaseada sobre el merge de H2 = `9873902`).

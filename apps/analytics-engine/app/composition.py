@@ -45,6 +45,7 @@ from .application.use_cases.compute_position_size import (
     ComputePositionSizeUseCase,
 )
 from .application.use_cases.open_day import OpenDayUseCase
+from .application.use_cases.place_order import PlaceOrderUseCase
 from .application.use_cases.trip_circuit_breaker import (
     TripCircuitBreakerUseCase,
 )
@@ -76,6 +77,7 @@ class Composition:
     compute_position_size: ComputePositionSizeUseCase
     check_drawdown: CheckDrawdownUseCase
     open_day: OpenDayUseCase
+    place_order: PlaceOrderUseCase
     trip_circuit_breaker: TripCircuitBreakerUseCase
     trade_journal: TradeJournal
     snapshot_repo: DrawdownSnapshotRepo
@@ -221,6 +223,32 @@ class _NoopOrderClient(ExchangeOrderClient):
     async def close_all_positions(self) -> list[Any]:
         return []
 
+    async def place_composite_order(
+        self, order: Any
+    ) -> Any:
+        from .domain.value_objects.order import OrderResult, OrderStatus, OrderType
+        return OrderResult(
+            id="noop-1",
+            symbol=order.symbol,
+            side=order.side,
+            type=OrderType.MARKET,
+            filled_amount=order.entry_amount,
+            status=OrderStatus.FILLED,
+        )
+
+    async def place_emergency_market(
+        self, symbol: str, side: Any, amount: Any
+    ) -> Any:
+        from .domain.value_objects.order import OrderResult, OrderStatus, OrderType
+        return OrderResult(
+            id="noop-emergency-1",
+            symbol=symbol,
+            side=side,
+            type=OrderType.MARKET,
+            filled_amount=amount,
+            status=OrderStatus.FILLED,
+        )
+
 
 def build_composition() -> Composition:
     """Construct the engine's composition for the current mode."""
@@ -252,10 +280,22 @@ def build_composition() -> Composition:
         check,
     ) = _build_h3(mode, exchange, trade_journal, snapshot_repo, env_writer)
 
+    # H4 wiring — PlaceOrderUseCase
+    if mode == "BACKTESTING":
+        order_client_for_placement: ExchangeOrderClient = _NoopOrderClient()
+    else:
+        if exchange is None:
+            raise RuntimeError("exchange is None in non-BACKTESTING mode")
+        order_client_for_placement = CcxtOrderClient(exchange=exchange)
+    place_order_uc = PlaceOrderUseCase(
+        order_client=order_client_for_placement
+    )
+
     return Composition(
         compute_position_size=compute_position_size,
         check_drawdown=check,
         open_day=open_day,
+        place_order=place_order_uc,
         trip_circuit_breaker=trip,
         trade_journal=trade_journal,
         snapshot_repo=snapshot_repo,
@@ -290,3 +330,7 @@ def get_trip_circuit_breaker_usecase(
     request: Request,
 ) -> TripCircuitBreakerUseCase:
     return _comp(request).trip_circuit_breaker
+
+
+def get_place_order_usecase(request: Request) -> PlaceOrderUseCase:
+    return _comp(request).place_order
