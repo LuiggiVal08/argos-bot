@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Callable
+from typing import Awaitable, Callable
 from uuid import uuid4
 
 from ...domain.entities.position_tracker import PositionTracker, TrackerVerdict
@@ -22,7 +22,7 @@ from ..ports.execution_logger import ExecutionLogger
 from ..ports.exchange_order_client import ExchangeOrderClient
 from ..ports.position_repository import PositionRepository
 
-PriceProvider = Callable[[str], Decimal]
+PriceProvider = Callable[[str], Awaitable[Decimal]]
 
 
 @dataclass(frozen=True)

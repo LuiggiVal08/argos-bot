@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Callable
+from typing import Awaitable, Callable
 from uuid import uuid4
 
 from ...domain.entities.signal_validator import SignalValidator
@@ -30,7 +30,7 @@ from ..ports.exchange_order_client import ExchangeOrderClient
 from ..ports.execution_logger import ExecutionLogger
 from ..ports.position_repository import PositionRepository
 
-IsHaltedFn = Callable[[], bool]
+IsHaltedFn = Callable[[], Awaitable[bool]]
 
 
 class ExecuteSignalError(RuntimeError):
