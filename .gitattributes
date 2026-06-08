@@ -1,0 +1,21 @@
+* text=auto eol=lf
+
+# Shell scripts — always LF (even on Windows)
+*.sh        text eol=lf
+
+# Windows native scripts — CRLF
+*.ps1       text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Docs — LF
+*.md        text eol=lf
+*.txt       text eol=lf
+
+# Configs that must stay as-is
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.toml      text eol=lf
+*.lock      text eol=lf binary
+package-lock.json text eol=lf -diff

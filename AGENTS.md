@@ -7,11 +7,12 @@
 
 **argos-bot** es un bot de trading autónomo de grado de producción para futuros perpetuos de criptomonedas.
 
-- **Arquitectura**: microservicios contenerizados, event-driven, hexagonal internamente.
+- **Arquitectura**: microservicios event-driven, hexagonal internamente, **agnóstica al deployment**.
 - **Servicios**:
-  - `apps/data-engine` (NestJS, TS) — WebSocket al exchange, inyecta ticks a Redis.
-  - `apps/analytics-engine` (FastAPI, Py 3.11) — Consume Redis, calcula indicadores, emite señales.
-  - `redis:7-alpine` — Message broker / buffer (<2ms target).
+  - `apps/data-engine` (NestJS, TS) — WebSocket al exchange, inyecta ticks al broker.
+  - `apps/analytics-engine` (FastAPI, Py 3.11) — Consume broker, calcula indicadores, emite señales.
+  - **Broker**: cualquier implementación RESP-compatibile (Redis 7+, Memurai, Dragonfly, Valkey, KeyDB, Garnet, Redict). El código consume el `MessageBus` port; el adapter concreto es pluggable vía `broker.kind` en `config.json`.
+- **Deployment**: agnóstico. El stack puede correr en Docker Compose (recomendado para reproducibilidad y CI) o bare metal (recomendado para dev nativo en Linux/WSL2/macOS/Windows). `docker-compose.yml` es **una** opción, no la única.
 - **Fuente de verdad**: `spec.md` en la raíz. Antes de cualquier cambio no trivial, lo leo.
 - **Modos de operación** (`ENVIRONMENT_MODE`): `BACKTESTING` | `PAPER_TRADING` | `LIVE`.
 - **Tracker de progreso**: `TASKS.md`. Lo actualizo al cerrar cada sesión de trabajo.
@@ -33,6 +34,7 @@ Estas vienen de `spec.md` sección 5 y de `spec_spec_invariants`. Antes de cualq
 11. **Stack leakage**: `ioredis`/`ws`/`ccxt` solo en `data-engine/src/infrastructure/`. `pandas`/`ta`/`tensorflow` solo en `analytics-engine/app/infrastructure/`.
 12. **Tick pipeline SLA**: inyección a Redis < 2ms p99.
 13. **Order retry**: máx 3 reintentos en 500ms; al fallar, market order para liquidar.
+14. **Deployment agnosticism**: el código de aplicación no se acopla a Docker ni a un broker concreto. Hostnames via env vars (`ARGOS_BROKER_URL`, `EXCHANGE_*`), paths via `path.join` / `os.path.join`, broker via `MessageBus` port. `docker-compose.yml` es una opción de deploy, no la única. Cambiar de Redis a Memurai/Dragonfly/Valkey es swap de adapter, no reescritura de código de aplicación.
 
 Si una invariante se va a romper, lo digo ANTES de hacer el cambio.
 
@@ -114,8 +116,9 @@ Mismo patrón para `apps/analytics-engine/app/` con `domain/`, `application/`, `
 | Generar docker-compose                       | `bootstrap_init_compose`                      |
 | Generar config.json                          | `bootstrap_init_config`                       |
 | Inicializar git                              | `bootstrap_init_git`                          |
-| Ver logs de un servicio                      | `docker_docker_logs <service>`                |
-| Listar servicios corriendo                   | `docker_docker_ps`                            |
+| Ver logs de un servicio                      | `docker_docker_logs <service>` (solo si deploy es Docker) |
+| Listar servicios corriendo                   | `docker_docker_ps` (solo si deploy es Docker) |
+| Health check agnóstico (Docker o bare metal) | `health_health_check`                         |
 | Backtest                                     | `backtest` (con args)                         |
 | Indicador técnico                            | `indicators` (con args)                       |
 
@@ -159,6 +162,7 @@ Mismo patrón para `apps/analytics-engine/app/` con `domain/`, `application/`, `
 2. Si hay cambios sin commitear, mencionarlo.
 3. Si hay un bloqueo, registrarlo en la sección Bloqueos.
 4. Resumir en 3-5 bullets lo que se hizo.
+5. Si hubo cambios en el modelo de deploy (Docker ↔ bare metal) o en el broker, actualizar `README.md` (sección Quick start) y `AGENTS.md` (§1, §2 #14).
 
 ## 12. Git workflow (ramificado y commits)
 

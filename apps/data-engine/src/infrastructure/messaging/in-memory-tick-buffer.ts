@@ -1,0 +1,90 @@
+import { Tick } from "../../domain/entities/tick"
+import { Price } from "../../domain/value-objects/price"
+import { Symbol } from "../../domain/value-objects/symbol"
+import { TickBuffer } from "../../application/ports/tick-buffer.port"
+
+export interface BinanceTradeEvent {
+  e: "trade"
+  E: number // event time
+  s: string // symbol, e.g. "BTCUSDT"
+  t: number // trade id
+  p: string // price
+  q: string // quantity
+  T: number // trade time
+  m: boolean // is buyer maker? true => seller is the aggressor => 'sell'
+}
+
+/**
+ * Bounded FIFO in-memory buffer.
+ *
+ * Spec §5 Historia 1: max 100. When full, oldest tick is dropped
+ * (FIFO eviction). drain() returns all ticks in insertion order and
+ * resets the buffer to empty.
+ *
+ * Process-local. Not shared across instances of the data-engine.
+ */
+export class InMemoryTickBuffer implements TickBuffer {
+  private readonly items: Tick[] = []
+
+  constructor(public readonly max: number = 100) {
+    if (max <= 0) {
+      throw new Error("InMemoryTickBuffer: max must be > 0")
+    }
+  }
+
+  async push(tick: Tick): Promise<void> {
+    this.items.push(tick)
+    while (this.items.length > this.max) {
+      this.items.shift()
+    }
+  }
+
+  size(): number {
+    return this.items.length
+  }
+
+  capacity(): number {
+    return this.max
+  }
+
+  async drain(): Promise<Tick[]> {
+    const out = this.items.splice(0, this.items.length)
+    return out
+  }
+}
+
+/**
+ * Helper to construct a Tick from a raw Binance trade event.
+ * Keeps the WebSocket parsing logic out of the domain layer.
+ */
+export function tickFromBinanceTrade(evt: BinanceTradeEvent): Tick {
+  // Binance streams are e.g. "btcusdt@trade". The `s` field is the
+  // upper-case concatenated form ("BTCUSDT") which we split at the
+  // quote boundary heuristically. For a single-symbol subscriber
+  // this is fine; for multi-symbol we pass the expected base/quote.
+  const symbol = symbolFromStream(evt.s)
+  return Tick.create({
+    symbol,
+    price: Price.parse(evt.p, 8),
+    quantity: BigInt(Math.trunc(Number(evt.q) * 1e8)),
+    side: evt.m ? "sell" : "buy",
+    ts: evt.T,
+    tradeId: String(evt.t),
+  })
+}
+
+const KNOWN_QUOTES = ["USDT", "USDC", "BUSD", "FDUSD", "BTC", "ETH", "USD"]
+
+export function symbolFromStream(raw: string): Symbol {
+  const upper = raw.toUpperCase()
+  for (const q of KNOWN_QUOTES) {
+    if (upper.endsWith(q) && upper.length > q.length) {
+      const base = upper.slice(0, upper.length - q.length)
+      return Symbol.parse(`${base}/${q}`)
+    }
+  }
+  // Fall back: treat as "BASE/UNKNOWN"; domain parser will reject if
+  // format is wrong. Better to surface a clear error than to silently
+  // mangle the symbol.
+  return Symbol.parse(`${upper}/UNKNOWN`)
+}

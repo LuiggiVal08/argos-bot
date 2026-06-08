@@ -28,17 +28,52 @@ Hard invariants (from `spec.md` §5): 1% risk per trade, ATR-based SL distance, 
 
 ## Quick start
 
+The same code runs in two ways. Pick one.
+
+### Option A — Docker Compose (recommended for production / CI)
+
 ```bash
-# Clone
 git clone https://github.com/LuiggiVal08/argos-bot.git
 cd argos-bot
-
-# Start the stack
 docker compose up -d
-
-# Health check
 docker compose ps
 ```
+
+### Option B — Bare metal (recommended for native dev on Windows / macOS / Linux)
+
+The app code is **deployment-agnostic** — Docker is one option, not the only one. The same binaries run natively.
+
+#### 1. Install a RESP-compatible broker
+
+| OS | Install | Notes |
+|---|---|---|
+| macOS | `brew install redis` | Start with `brew services start redis` |
+| Ubuntu / Debian (incl. WSL2) | `sudo apt install redis-server` | WSL2 forwards ports to `localhost` automatically |
+| Windows (native, no WSL) | `choco install memurai` or `scoop install memurai` | Memurai is a Redis-compatible Windows broker |
+| Any | `docker run -d -p 6379:6379 redis:7-alpine` | Still works if you only have Docker for the broker |
+
+The broker is pluggable — it only needs to speak the RESP protocol. See [`AGENTS.md`](./AGENTS.md) §2 invariant #14.
+
+#### 2. Run the services
+
+```bash
+# Terminal 1 — data-engine (NestJS)
+cd apps/data-engine
+ARGOS_BROKER_URL=redis://localhost:6379 npm run dev
+
+# Terminal 2 — analytics-engine (FastAPI)
+cd apps/analytics-engine
+ARGOS_BROKER_URL=redis://localhost:6379 uvicorn app.main:app --reload --port 8000
+```
+
+#### 3. Verify
+
+```bash
+# Single command, auto-detects Docker or bare metal
+/health
+```
+
+This delegates to the `health_health_check` AI tool, which checks broker reachability, git status, and either `docker compose ps` (if Docker is present) or HTTP health endpoints on each service.
 
 ## Repository layout
 

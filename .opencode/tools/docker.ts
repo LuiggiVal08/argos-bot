@@ -8,7 +8,8 @@ const dc = (args: string[]) =>
   })
 
 export const docker_ps = tool({
-  description: "List compose services for argos-bot with status and health.",
+  description:
+    "List compose services for argos-bot with status and health. Only use when the stack is deployed via Docker Compose. For bare-metal deployments use health_health_check instead.",
   args: {},
   async execute() {
     return { title: "docker compose ps", output: dc(["ps"]) }
@@ -16,7 +17,8 @@ export const docker_ps = tool({
 })
 
 export const docker_logs = tool({
-  description: "Tail the last N lines of a compose service's logs.",
+  description:
+    "Tail the last N lines of a compose service's logs. Only use when the stack is deployed via Docker Compose. For bare-metal deployments read logs from the running process directly.",
   args: {
     service: tool.schema
       .string()
@@ -33,7 +35,7 @@ export const docker_logs = tool({
 
 export const docker_restart_service = tool({
   description:
-    "Restart a single compose service. Always asks the user first.",
+    "Restart a single compose service. Only use when the stack is deployed via Docker Compose. Always asks the user first. For bare-metal deployments restart the process directly.",
   args: {
     service: tool.schema.string().describe("Service name to restart"),
   },

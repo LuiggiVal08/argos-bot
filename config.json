@@ -2,6 +2,11 @@
   "environment_mode": "PAPER_TRADING",
   "risk_pct": 0.01,
   "drawdown_pct": 0.05,
+  "broker": {
+    "kind": "redis-protocol",
+    "url": "${ARGOS_BROKER_URL}",
+    "stream_prefix": "ticks:"
+  },
   "exchanges": [
     {
       "id": "binance",
@@ -10,8 +15,7 @@
     }
   ],
   "symbols": [
-    "BTC/USDT",
-    "ETH/USDT"
+    "BTC/USDT"
   ],
   "timeframes": [
     "1m",
@@ -20,8 +24,5 @@
     "1h",
     "4h",
     "1d"
-  ],
-  "redis": {
-    "url": "redis://redis:6379"
-  }
+  ]
 }
