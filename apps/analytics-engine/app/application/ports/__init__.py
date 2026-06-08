@@ -5,6 +5,7 @@ not couple to. The infrastructure layer provides the concrete
 adapters (CCXT, TA, broker, Keras).
 """
 from .atr_calculator import AtrCalculator, AtrCalculatorError
+from .backtest_reporter import BacktestReporter, MetricsCalculator
 from .balance_provider import BalanceProvider, BalanceProviderError
 from .checkpoint_repository import (
     CheckpointIOError,
@@ -16,14 +17,15 @@ from .data_preprocessor import (
     InsufficientDataError,
     PreprocessingError,
 )
+from .execution_logger import ExecutionLogger
 from .feature_analyzer import AnalysisError, FeatureAnalyzer
-from .backtest_reporter import BacktestReporter, MetricsCalculator
 from .incident_reporter import IncidentReporter
 from .incident_repository import IncidentRepository
 from .min_lot_provider import MarketConstraints, MinLotProvider, MinLotProviderError
 from .model_predictor import ModelPredictor, PredictionError
 from .model_trainer import ModelTrainer, TrainingError
 from .ohlcv_source import OhlcvSource, OhlcvSourceError
+from .signal_consumer import PositionRepository, SignalConsumer
 from .strategy import Strategy, StrategyRegistry
 
 __all__ = [
@@ -37,6 +39,7 @@ __all__ = [
     "CheckpointNotFoundError",
     "CheckpointRepository",
     "DataPreprocessor",
+    "ExecutionLogger",
     "FeatureAnalyzer",
     "IncidentReporter",
     "IncidentRepository",
@@ -49,8 +52,10 @@ __all__ = [
     "ModelTrainer",
     "OhlcvSource",
     "OhlcvSourceError",
+    "PositionRepository",
     "PredictionError",
     "PreprocessingError",
+    "SignalConsumer",
     "Strategy",
     "StrategyRegistry",
     "TrainingError",
