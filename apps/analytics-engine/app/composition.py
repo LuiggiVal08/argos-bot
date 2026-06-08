@@ -269,6 +269,10 @@ def build_composition() -> Composition:
     mode = _env_mode()
     log.info("composition_mode", mode=mode)
 
+    # H5: preflight check aborts LIVE mode if secrets are missing.
+    from .preflight import abort_if_missing
+    abort_if_missing(mode)
+
     exchange: ccxt.Exchange | None = None
     if mode != "BACKTESTING":
         exchange = _build_exchange()
