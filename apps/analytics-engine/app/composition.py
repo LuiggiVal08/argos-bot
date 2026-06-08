@@ -49,7 +49,9 @@ from .application.use_cases.compute_position_size import (
 from .application.use_cases.list_incidents import ListIncidentsUseCase
 from .application.use_cases.open_day import OpenDayUseCase
 from .application.use_cases.place_order import PlaceOrderUseCase
+from .application.use_cases.predict_signal import PredictSignalUseCase
 from .application.use_cases.report_incident import ReportIncidentUseCase
+from .application.use_cases.train_model import TrainModelUseCase
 from .application.use_cases.trip_circuit_breaker import (
     TripCircuitBreakerUseCase,
 )
@@ -376,3 +378,88 @@ def get_list_incidents_usecase(
     request: Request,
 ) -> ListIncidentsUseCase:
     return _comp(request).list_incidents
+
+
+# H6 — NovaQuant model use cases (built on demand, cached in app.state) -------
+
+@dataclass
+class _ModelUseCases:
+    train: TrainModelUseCase
+    predict: PredictSignalUseCase
+
+
+def get_model_use_cases(request: Request) -> _ModelUseCases:
+    """Return the NovaQuant model use cases.
+
+    Built once and cached in `app.state.model_use_cases`. Requires
+    TensorFlow for the Keras adapter.
+    """
+    cached: _ModelUseCases | None = getattr(request.app.state, "model_use_cases", None)
+    if cached is not None:
+        return cached
+
+    comp = _comp(request)
+
+    # OHLCV source for training — uses the same exchange as the rest
+    if comp.mode == "BACKTESTING":
+        ohlcv_source: Any = _FakeOhlcvSource()
+    else:
+        exchange = comp.exchange
+        if exchange is None:
+            raise RuntimeError("exchange is None in non-BACKTESTING mode")
+        ohlcv_source = _CcxtOhlcvAdapter(exchange)
+
+    # NovaQuant adapters
+    from .infrastructure.training.data_preprocessor import TaDataPreprocessor
+    from .infrastructure.training.feature_analyzer_impl import CorrelationFeatureAnalyzer
+    from .infrastructure.models.nova_quant_keras import NovaQuantKerasModel
+    from .infrastructure.models.checkpoint_repo_fs import FsCheckpointRepository
+
+    preprocessor = TaDataPreprocessor()
+    analyzer = CorrelationFeatureAnalyzer()
+    keras_model = NovaQuantKerasModel()
+    repo = FsCheckpointRepository()
+
+    train_uc = TrainModelUseCase(
+        ohlcv_source=ohlcv_source,
+        preprocessor=preprocessor,
+        analyzer=analyzer,
+        trainer=keras_model,
+        repo=repo,
+    )
+    predict_uc = PredictSignalUseCase(
+        ohlcv_source=ohlcv_source,
+        preprocessor=preprocessor,
+        predictor=keras_model,
+        repo=repo,
+    )
+
+    use_cases = _ModelUseCases(train=train_uc, predict=predict_uc)
+    request.app.state.model_use_cases = use_cases
+    return use_cases
+
+
+class _CcxtOhlcvAdapter:
+    """Adapta ccxt_ohlcv_source (funcion que retorna DataFrame) al port OhlcvSource."""
+
+    def __init__(self, exchange: ccxt.Exchange) -> None:
+        self._exchange = exchange
+
+    async def fetch_ohlcv(
+        self,
+        symbol: str,
+        timeframe: str = "1h",
+        limit: int = 1000,
+        since: int | None = None,
+    ) -> list[dict]:
+        df = await ccxt_ohlcv_source(self._exchange, symbol, timeframe, limit)
+        return df.to_dict("records")
+
+
+class _FakeOhlcvSource:
+    """OHLCV source for BACKTESTING: returns empty list."""
+
+    async def fetch_ohlcv(
+        self, symbol: str, timeframe: str = "1h", limit: int = 1000, since: int | None = None
+    ) -> list[dict]:
+        return []
