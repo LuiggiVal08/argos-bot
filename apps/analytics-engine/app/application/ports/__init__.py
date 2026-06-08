@@ -7,6 +7,8 @@ adapters (CCXT, TA, broker).
 from .balance_provider import BalanceProvider, BalanceProviderError
 from .atr_calculator import AtrCalculator, AtrCalculatorError
 from .min_lot_provider import MinLotProvider, MinLotProviderError, MarketConstraints
+from .incident_reporter import IncidentReporter
+from .incident_repository import IncidentRepository
 
 __all__ = [
     "BalanceProvider",
@@ -16,4 +18,6 @@ __all__ = [
     "MinLotProvider",
     "MinLotProviderError",
     "MarketConstraints",
+    "IncidentReporter",
+    "IncidentRepository",
 ]
