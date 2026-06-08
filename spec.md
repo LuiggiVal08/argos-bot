@@ -212,7 +212,23 @@ El núcleo del Dominio evalúa el estado del DataFrame para conmutar la estrateg
 
 ---
 
-### Épica 5: Telemetría y Monitoreo del Sistema (Fase Final Postergada)
+### Épica 5 (Fase 1): Motor de Ejecución en Vivo (Live Execution Engine)
+
+#### **Historia de Usuario 7: Orquestación de Ejecución en Vivo desde Señales**
+
+> **Como** motor de trading automatizado,
+> **Quiero** un orquestador que consuma señales de trading (NovaQuant o estrategia), valide riesgo, calcule tamaño de posición, ejecute órdenes compuestas y monitoree posiciones abiertas en tiempo real,
+> **Para** cerrar el bucle señal→orden→posición→P&L replicando en producción lo que el Backtest Engine (H8) simula fuera de línea.
+
+* **Criterios de Aceptación:**
+* **Happy Path:** El orquestador recibe una señal `TradingSignal` (BUY/SELL con confianza) → consulta el Circuit Breaker (no está HALTED) → calcula tamaño de posición vía `PositionCalculator` (≤1% risk) → invoca `PlaceOrderUseCase` con orden compuesta (entry + SL a distancia ATR + TP) → persiste la posición resultante en `PositionRepository` → emite un `ExecutionReport`. El loop de monitoreo de posiciones abiertas verifica cada N segundos si el SL o TP deben ajustarse, y registra el P&L real al cierre.
+* **Sad Path:** Si la señal tiene confianza inferior al mínimo configurable, se descarta con log. Si el Circuit Breaker está HALTED, la señal se rechaza con log de advertencia. Si `PlaceOrderUseCase` falla (3 reintentos agotados), se registra un incidente crítico y se notifica vía `IncidentReporter` (H4-B). Si el exchange devuelve un fill parcial, el orquestador registra la posición con la cantidad real ejecutada.
+* **Cooldown:** El orquestador mantiene un cooldown por símbolo (configurable, default 60s) para evitar señales duplicadas. Cualquier señal para el mismo símbolo dentro del cooldown se descarta.
+* **Reinicio:** Al arrancar, el orquestador carga posiciones abiertas desde el `PositionRepository` y reanuda el monitoreo. Si el archivo de persistencia está corrupto o ausente, arranca con posición plana.
+
+---
+
+### Épica 5 (Fase 2): Telemetría y Monitoreo del Sistema (Fase Final Postergada)
 
 #### **Historia de Usuario 6: Integración del Módulo de Monitoreo Operativo**
 

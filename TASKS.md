@@ -1,8 +1,8 @@
 ---
 project: argos-bot
-total_tasks: 76
+total_tasks: 85
 completed: 76
-in_progress: 0
+in_progress: 1
 blocked: 0
 overall_pct: 100
 last_updated: 2026-06-08
@@ -30,6 +30,7 @@ last_updated: 2026-06-08
 | H4-B  | OWASP Incident Response | ✅     | 100%   | 4/4    |
 | H5    | Secrets & Env Mode      | ✅     | 100%   | 4/4    |
 | H6    | NovaQuant ML Pipeline   | ✅     | 100%   | 9/9    |
+| H7    | Live Execution Engine   | 🟡     | 0%     | 0/9    |
 | H8    | Backtesting Engine      | ✅     | 100%   | 9/9    |
 
 ---
@@ -243,6 +244,31 @@ last_updated: 2026-06-08
 - Backtesting usa _FakeOhlcvSource que retorna lista vacía; PAPER/LIVE usa _CcxtOhlcvAdapter.
 - Checkpoints se persisten en `checkpoints/` como .keras + .json metadata.
 - Feature engineering incluye RSI-14, MACD (12/26/9), BB (20,2), EMA-20, ATR-14.
+
+---
+
+## 🟡 H7 — Live Execution Engine
+
+> Orquestador que cierra el bucle señal→orden→posición→P&L en tiempo real, conectando NovaQuant (H6), risk (H2/H3), y order placement (H4-A) en producción o paper trading.
+
+**Pipeline**: `TradingSignal` → SignalValidator (confidence + cooldown) → CircuitBreakerCheck → PositionSizer → PlaceOrderUseCase → PositionTracker (SL/TP loop) → ExecutionLogger.
+
+- [ ] H7-001 — Domain VOs: `ExecutionSignal` (side, confidence, symbol, strategy_id, timestamp), `LivePosition` (side, units, entry, current_price, unrealized_pnl, sl, tp, opened_at), `ExecutionReport` (signal_id, order_id, status, filled_qty, avg_price, pnl, errors[])
+- [ ] H7-002 — Domain entity: `SignalValidator` (confidence threshold, cooldown per symbol, dedup by signal_id), `PositionTracker` (SL/TP monitoring loop, adjust SL to breakeven after N%, P&L snapshot)
+- [ ] H7-003 — Ports: `SignalConsumer` (subscribe to signal sources), `PositionRepository` (save/load/update positions, list open), `ExecutionLogger` (log every execution event)
+- [ ] H7-004 — Use case: `ExecuteSignalUseCase` (validate → check CB → size → place order → persist position → log), `MonitorPositionsUseCase` (periodic SL/TP check → close if hit → log P&L)
+- [ ] H7-005 — Infrastructure: `NovaQuantSignalConsumer` (wraps NovaQuant predictor output into ExecutionSignal), `InMemoryPositionRepository` + `FilePositionRepository` (JSON persistence for restart recovery)
+- [ ] H7-006 — Infrastructure: `StructlogExecutionLogger` (structured JSON logs per execution event)
+- [ ] H7-007 — Integration wiring: `composition.py` with `get_execution_orchestrator(request)`, `get_position_repo(request)`, signal cooldown registry
+- [ ] H7-008 — API: `POST /execute/signal` (trigger signal manually), `GET /position/list` (open positions), `GET /execution/log` (recent executions)
+- [ ] H7-009 — Tests: unit (VOs, validators, tracker) + integration (endpoints, orchestration). 30+ new tests.
+
+**Progreso**: 0/9 = **0%**
+**Dependencias**: H2 (position sizing), H3 (circuit breaker check), H4-A (order placement), H6 (NovaQuant signals), H8 (strategy patterns)
+**Notas**:
+- H7 no introduce un nuevo exchange adapter; reusa CCXT de H4-A.
+- El loop de monitoreo corre como background task en FastAPI (asyncio.create_task o BackgroundTasks).
+- PositionRepository debe persistir a disco para sobrevivir reinicios (formato JSON simple, mismo patrón que FileBacktestReporter).
 
 ---
 
