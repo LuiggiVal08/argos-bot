@@ -40,12 +40,16 @@ from .application.ports.environment_mode_writer import (
 from .application.ports.drawdown_snapshot_repo import (
     DrawdownSnapshotRepo,
 )
+from .application.ports.incident_reporter import IncidentReporter
+from .application.ports.incident_repository import IncidentRepository
 from .application.use_cases.check_drawdown import CheckDrawdownUseCase
 from .application.use_cases.compute_position_size import (
     ComputePositionSizeUseCase,
 )
+from .application.use_cases.list_incidents import ListIncidentsUseCase
 from .application.use_cases.open_day import OpenDayUseCase
 from .application.use_cases.place_order import PlaceOrderUseCase
+from .application.use_cases.report_incident import ReportIncidentUseCase
 from .application.use_cases.trip_circuit_breaker import (
     TripCircuitBreakerUseCase,
 )
@@ -61,6 +65,12 @@ from .infrastructure.indicators.ta_atr_calculator import TaAtrCalculator
 from .infrastructure.journal.in_memory_snapshot_repo import InMemorySnapshotRepo
 from .infrastructure.journal.in_memory_trade_journal import InMemoryTradeJournal
 from .infrastructure.market.ccxt_min_lot_provider import CcxtMinLotProvider
+from .infrastructure.monitoring.in_memory_incident_repo import (
+    InMemoryIncidentRepository,
+)
+from .infrastructure.monitoring.logging_incident_reporter import (
+    LoggingIncidentReporter,
+)
 from .infrastructure.ohlcv.ccxt_ohlcv_source import ccxt_ohlcv_source
 
 if TYPE_CHECKING:
@@ -78,7 +88,11 @@ class Composition:
     check_drawdown: CheckDrawdownUseCase
     open_day: OpenDayUseCase
     place_order: PlaceOrderUseCase
+    report_incident: ReportIncidentUseCase
+    list_incidents: ListIncidentsUseCase
     trip_circuit_breaker: TripCircuitBreakerUseCase
+    incident_repo: IncidentRepository
+    incident_reporter: IncidentReporter
     trade_journal: TradeJournal
     snapshot_repo: DrawdownSnapshotRepo
     env_writer: EnvironmentModeWriter
@@ -291,12 +305,24 @@ def build_composition() -> Composition:
         order_client=order_client_for_placement
     )
 
+    # H4-B wiring — Incident monitoring
+    incident_repo: IncidentRepository = InMemoryIncidentRepository()
+    incident_reporter: IncidentReporter = LoggingIncidentReporter()
+    report_incident_uc = ReportIncidentUseCase(
+        reporter=incident_reporter, repo=incident_repo
+    )
+    list_incidents_uc = ListIncidentsUseCase(repo=incident_repo)
+
     return Composition(
         compute_position_size=compute_position_size,
         check_drawdown=check,
         open_day=open_day,
         place_order=place_order_uc,
+        report_incident=report_incident_uc,
+        list_incidents=list_incidents_uc,
         trip_circuit_breaker=trip,
+        incident_repo=incident_repo,
+        incident_reporter=incident_reporter,
         trade_journal=trade_journal,
         snapshot_repo=snapshot_repo,
         env_writer=env_writer,
@@ -334,3 +360,15 @@ def get_trip_circuit_breaker_usecase(
 
 def get_place_order_usecase(request: Request) -> PlaceOrderUseCase:
     return _comp(request).place_order
+
+
+def get_report_incident_usecase(
+    request: Request,
+) -> ReportIncidentUseCase:
+    return _comp(request).report_incident
+
+
+def get_list_incidents_usecase(
+    request: Request,
+) -> ListIncidentsUseCase:
+    return _comp(request).list_incidents
