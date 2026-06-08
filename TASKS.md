@@ -24,8 +24,8 @@ last_updated: 2026-06-07
 |-------|-------------------------|--------|--------|--------|
 | Setup | Infra y tools           | ✅     | 100%   | 14/14  |
 | H1    | Tick Pipeline (<2ms)    | ✅     | 100%   | 11/11  |
-| H2    | Position Sizing (≤1%)   | ⬜     | 0%     | 0/4    |
-| H3    | Circuit Breaker (5%)    | ⬜     | 0%     | 0/4    |
+| H2    | Position Sizing (≤1%)   | ✅     | 100%   | 9/9    |
+| H3    | Circuit Breaker (5%)    | ✅     | 100%   | 9/9    |
 | H4    | OWASP Incident Response | ⬜     | 0%     | 0/4    |
 | H5    | Secrets & Env Mode      | ⬜     | 0%     | 0/4    |
 
@@ -81,38 +81,49 @@ last_updated: 2026-06-07
 
 ---
 
-## 🟡 H2 — Position Sizing (≤1% del free balance)
+## ✅ H2 — Position Sizing (≤1% del free balance)
 
 > spec.md §5 Historia 2. Capa de Dominio calcula `units = (free_balance * risk_pct) / atr`. SL dinámico a distancia ATR. Sad path: CCXT timeout o balance=0 → abort; size < min_lot → descartar.
 
-- [ ] H2-001 — Domain VOs: `Atr`, `RiskPct`, `PositionSize` (validación: atr>0, 0<risk_pct≤0.02, units≥0)
-- [ ] H2-002 — Domain entity: `RiskCalculator.calculate(free_balance, atr, risk_pct) → PositionSize`
-- [ ] H2-003 — Application ports: `BalanceProvider`, `AtrCalculator`, `MinLotProvider` (Protocol)
-- [ ] H2-004 — Application use case: `ComputePositionSizeUseCase` con CCXT-error handling + min_lot check
-- [ ] H2-005 — Infrastructure adapters: `TaAtrCalculator` (lib `ta`), `CcxtBalanceProvider`, `MockBalanceProvider`, `CcxtMinLotProvider`
-- [ ] H2-006 — API endpoint: `POST /risk/position-size` con DI composition root
-- [ ] H2-007 — Tests unit (VOs + entity + use case con mocks) + integration (TA lib real)
-- [ ] H2-008 — Validation: pytest, mypy, arch_lint, secret_scan
-- [ ] H2-009 — Commit + PR body (`docs/prs/h2-position-sizing.md`)
+- [x] H2-001 — Domain VOs: `Atr`, `RiskPct`, `PositionSize` (validación: atr>0, 0<risk_pct≤0.02, units≥0)
+- [x] H2-002 — Domain entity: `RiskCalculator.calculate(free_balance, atr, risk_pct) → PositionSize`
+- [x] H2-003 — Application ports: `BalanceProvider`, `AtrCalculator`, `MinLotProvider` (Protocol)
+- [x] H2-004 — Application use case: `ComputePositionSizeUseCase` con CCXT-error handling + min_lot check
+- [x] H2-005 — Infrastructure adapters: `TaAtrCalculator` (lib `ta`), `CcxtBalanceProvider`, `MockBalanceProvider`, `CcxtMinLotProvider`
+- [x] H2-006 — API endpoint: `POST /risk/position-size` con DI composition root
+- [x] H2-007 — Tests unit (VOs + entity + use case con mocks) + integration (TA lib real)
+- [x] H2-008 — Validation: pytest (43 passed, 1 skipped), mypy clean, arch_lint clean, secret_scan clean
+- [x] H2-009 — Commit + PR body (`docs/prs/h2-position-sizing.md`); **PR #2 mergeado a dev**
 
-**Progreso**: 0/9 = **0%**
+**Progreso**: 9/9 = **100%**
 **Dependencias**: ninguna
 **Notas**: el tool opencode `risk_position_size` ya implementa la fórmula base (H2-002 lo institucionaliza en el engine). Min lot check es la pieza nueva que el tool no tenía. Integration con strategy/IA queda para historias posteriores.
 
 ---
 
-## ⬜ H3 — Circuit Breaker (5% drawdown diario)
+## ✅ H3 — Circuit Breaker (5% drawdown diario)
 
-> spec.md §5 Historia 3. Cortar operativa si pérdida diaria ≥ 5% del balance de apertura UTC 00:00.
+> spec.md §5 Historia 3. Cortar operativa si pérdida diaria ≥ 5% del balance de apertura UTC 00:00. Acciones: cancelar órdenes, cerrar posiciones a mercado, `ENVIRONMENT_MODE=PASIVO`, halt loop, log crítico.
 
-- [ ] H3-001 — Tracker de P&L diario (snapshot UTC 00:00 + delta intradía)
-- [ ] H3-002 — `drawdown_check` con umbrales SAFE / WARN / TRIP
-- [ ] H3-003 — Acciones de disparo: cancelar órdenes, cerrar posiciones, `ENVIRONMENT_MODE=PASIVO`
-- [ ] H3-004 — Tests SAFE / WARN (3% < 5%) / TRIP (5% ≥)
+- [x] H3-001 — Domain VOs: `DrawdownState`, `DrawdownSnapshot`, `TripAction` (con orden canónico enforced)
+- [x] H3-002 — Domain entity: `CircuitBreaker.evaluate(snapshot, current_state) → DrawdownState` (SAFE/WARN/TRIP, HALTED sticky) + `should_reset_utc(now)` + `trip_action()`
+- [x] H3-003 — Application ports: `TradeJournal`, `ExchangeOrderClient`, `EnvironmentModeWriter`, `DrawdownSnapshotRepo`
+- [x] H3-004 — Application use cases: `CheckDrawdownUseCase`, `TripCircuitBreakerUseCase`, `OpenDayUseCase`
+- [x] H3-005 — Infrastructure: `InMemoryTradeJournal`, `InMemorySnapshotRepo`, `CcxtOrderClient`, `FileEnvironmentModeWriter` (atomic write, BACKTESTING default on missing)
+- [x] H3-006 — API: `GET /risk/drawdown` (read-only), `POST /risk/drawdown/check`, `POST /risk/day/open`
+- [x] H3-007 — Tests: 54 nuevos (30 unit domain, 13 unit usecases, 5 unit adapters, 6 integration endpoint). 97 passed / 1 skipped
+- [x] H3-008 — Validation: pytest 97/97 OK, mypy OK (H3-specific issues fixed: HALTED stickiness, datetime import, `Request` real import, `warn_ratio` validation), arch_lint PASS, secret_scan clean (los 5 hits son placeholders en `.agents/skills/*/SKILL.md`, no en código)
+- [x] H3-009 — Commit (8 commits, conventional) + PR body
 
-**Progreso**: 0/4 = **0%**
-**Dependencias**: H5-003 (env mode)
-**Notas**: tool `risk_drawdown_check` ya existe con la lógica SAFE/WARN/TRIP; H3 lo institucionaliza dentro del engine.
+**Progreso**: 9/9 = **100%**
+**Dependencias**: H5-003 (env mode write file/secret) — H3 escribe `ENVIRONMENT_MODE=PASIVO` via port; H5 controla el sad path LIVE (spec sad path: si LIVE sin EXCHANGE_API_KEY → abort exit 1, manejado por `config_toggle_mode` + pre-flight en `composition.py`).
+**Notas**:
+- Bug pre-existente del H2: el helper `get_compute_position_size_usecase(request: "Request")` usaba string forward-ref; con `pydantic 2.13` esto rompía la resolución de params de FastAPI. Reemplazado por `from fastapi import Request` real. Mismo fix aplicado a los nuevos helpers H3.
+- `warn_ratio` se valida en `(0, 1]` pero NO se compara con `threshold` (es una fracción del mismo, p.ej. 0.6). La comparación invertida del primer commit habría roto `CircuitBreaker()` con defaults; corregido en H3-002.
+- HALTED es sticky: aunque el drawdown se recupere, `evaluate` no downgrade. El use case no re-arma el breaker por accidente.
+- `TripAction.__post_init__` enforces canonical order: si pasás `(CLOSE, CANCEL, ...)` revienta. No se puede ejecutar `SET_PASIVO` antes que `CANCEL_ORDERS`.
+- Trip en BACKTESTING usa un no-op order client (no hay órdenes reales que cancelar); el resto del trip (env + clear snapshot) corre igual para validar la cadena completa.
+- 6 integration tests cubren el flujo end-to-end via TestClient + composition.
 
 ---
 
@@ -153,6 +164,26 @@ _Ninguno actualmente._
 ---
 
 ## Bitácora
+
+### 2026-06-07 — Sesión H3: Circuit Breaker
+- ✅ Branch `feature/h3-circuit-breaker` creada desde `dev` (rebaseada sobre el merge de H2 = `9873902`).
+- ✅ H3-001..H3-007 implementados: 3 VOs (DrawdownState/DrawdownSnapshot/TripAction con orden canónico enforced), entity CircuitBreaker (HALTED sticky, reset UTC 00:00), 4 ports (TradeJournal/ExchangeOrderClient/EnvironmentModeWriter/DrawdownSnapshotRepo), 3 use cases (CheckDrawdown/Trip/OpenDay), 4 adapters (in-memory + Ccxt + File env writer con atomic write), 3 endpoints (`/risk/day/open`, `/risk/drawdown/check`, `/risk/drawdown`).
+- ✅ H3-007: 97 tests passed / 1 skipped (54 nuevos: 30 unit domain, 13 unit usecases, 5 unit adapters, 6 integration endpoint).
+- ✅ H3-008: pytest 97/97, arch_lint PASS, secret_scan clean (los 5 hits son placeholders en `.agents/skills/*/SKILL.md`, no en código de argos).
+- 🐛 Bug encontrado y corregido en H3-002: `warn_ratio <= threshold` se invirtió en la validación — habría roto `CircuitBreaker()` con defaults (0.6 no es <= 0.05). Ahora `warn_ratio` se valida solo en `(0, 1]` independientemente.
+- 🐛 Bug pre-existente del H2 detectado: `get_compute_position_size_usecase(request: "Request")` con string forward-ref rompe la resolución de params de FastAPI con pydantic 2.13. Reemplazado por `from fastapi import Request` real. Mismo fix aplicado a los nuevos helpers H3.
+- 🐛 `_NoopOrderClient` y la wrapper `TmpFileEnvWriter` en tests también iterados: la wrapper ahora hereda de `FileEnvironmentModeWriter` (no la envuelve) para que `isinstance(..., EnvironmentModeWriter)` pase.
+- ✅ 8 commits conventional en `feature/h3-circuit-breaker`: h3-001..h3-007 + TASKS update.
+- 🎯 **H3 listo para PR.** Push pendiente de confirmación del usuario (AGENTS.md §12).
+
+### 2026-06-07 — Sesión H2: Position Sizing
+- ✅ Branch `feature/h2-position-sizing` mergeada a `dev` vía PR #2 (merge commit `9873902`).
+- ✅ 9 commits conventional, H2 al 100% (9/9 tareas).
+- ✅ 43 tests pasados (21 unit VOs + 7 unit entity + 7 unit usecase + 3 integration ATR + 4 integration endpoint + 1 health).
+- 🐛 Bug del H2-007: `risk_calculator.py` import path era `.value_objects.atr` (hermanos) en lugar de `..value_objects.atr`. Corregido.
+- 🐛 Decimal quantise 8dp: `(Decimal("100") * Decimal("0.01")) / Decimal("600")` redondea a `0.16666667` (no 0.16666666). Test expectation actualizado.
+- 🐛 `Atr._MAX_DECIMALS` subido de 12 a 18 para aceptar la precisión natural de `ta.average_true_range`.
+- ✅ `docs/prs/h2-position-sizing.md` creado (pendiente de archivar a `done/` cuando PR sea mergeado por el usuario — eso es post-merge humano, no del agente).
 
 ### 2026-06-07 — Sesión H1: Tick Pipeline
 - ✅ Branch `feature/h1-tick-pipeline` creada desde `dev`.
