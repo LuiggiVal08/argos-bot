@@ -1,7 +1,7 @@
 ---
 project: argos-bot
-total_tasks: 67
-completed: 67
+total_tasks: 76
+completed: 76
 in_progress: 0
 blocked: 0
 overall_pct: 100
@@ -30,6 +30,7 @@ last_updated: 2026-06-08
 | H4-B  | OWASP Incident Response | ✅     | 100%   | 4/4    |
 | H5    | Secrets & Env Mode      | ✅     | 100%   | 4/4    |
 | H6    | NovaQuant ML Pipeline   | ✅     | 100%   | 9/9    |
+| H8    | Backtesting Engine      | ✅     | 100%   | 9/9    |
 
 ---
 
@@ -245,6 +246,39 @@ last_updated: 2026-06-08
 
 ---
 
+## ✅ H8 — Backtesting Engine
+
+> Framework de backtesting para validar estrategias contra datos históricos. Estrategias clásicas (EMA crossover, RSI mean reversion) + framework extensible para NovaQuant.
+
+**Engine**: `BacktestEngine` entidad de dominio que procesa velas secuencialmente, genera señales vía callable, simula posiciones con SL dinámico basado en ATR, calcula PnL y produce curva de equity.
+
+**Estrategias**: `EmaCrossStrategy` (trend following, EMA rápida 9 / lenta 21, crossover → BUY/SELL), `RsiMeanReversionStrategy` (mean reversion, RSI-14, oversold < 30 > overbought 70, bounce → BUY/SELL). Registro extensible via `StrategyDictRegistry`.
+
+**Métricas**: `SimpleMetricsCalculator` — Sharpe ratio anualizado (RF=0), max drawdown pico-a-valle, win rate, profit factor, volatilidad, PnL promedio.
+
+**Reportes**: `FileBacktestReporter` — JSON en `reports/backtest/<strategy>_<symbol>_<timestamp>.json` con config, métricas, trades, y equity curve.
+
+- [x] H8-001 — Domain VOs: BacktestConfig (strategy_id, symbol, timeframe, initial_balance, risk_pct 0-2%, max_trades), BacktestTrade (side, entry/exit, units, pnl), BacktestMetrics (sharpe, max_dd, win_rate, total_return, profit_factor)
+- [x] H8-002 — Domain entity: BacktestEngine (sequential candle loop, SignalFn callable, entry/exit simulation, ATR-based SL, equity curve, max_trades cap)
+- [x] H8-003 — Ports: Strategy protocol (build -> SignalFn), BacktestReporter (save report), MetricsCalculator (compute from trades + equity)
+- [x] H8-004 — Use case: RunBacktestUseCase (resolve strategy -> fetch OHLCV -> run engine -> calc metrics -> save report -> return result)
+- [x] H8-005 — Infrastructure strategies: EmaCrossStrategy (9/21 EMA crossover, confidence basado en distancia), RsiMeanReversionStrategy (14-period RSI, oversold 30/overbought 70, bounce detection), StrategyDictRegistry (con defaults + register)
+- [x] H8-006 — Infrastructure metrics + reporter: SimpleMetricsCalculator (Sharpe anualizado sqrt(365), max drawdown, win rate, profit factor, vol), FileBacktestReporter (JSON con trades + equity curve)
+- [x] H8-007 — API: POST /backtest/run (config params, 422 sad paths), GET /backtest/strategies (lista IDs disponibles)
+- [x] H8-008 — Tests: 64 nuevos (21 unit VOs + 8 unit engine + 14 unit strategies + 10 unit metrics + 7 integration endpoint). 264/265 total pass (1 skipped)
+- [x] H8-009 — Validation: pytest 264/265, arch_lint PASS, secret_scan clean, 1 commit conventional
+
+**Progreso**: 9/9 = **100%**
+**Dependencias**: H6 (NovaQuant como estrategia futura), H2 (position sizing pattern)
+**Notas**:
+- BacktestEngine es agnóstico de estrategia — recibe un callable `SignalFn: (idx, ohlcv, config) -> (side, confidence) | None`.
+- SL distance = max(ATR_14 * 1.5, entry_price * 0.005).
+- Position sizing = (balance * risk_pct) / 0.01 / entry_price.
+- BACKTESTING mode usa `_FakeOhlcvSource` (sin datos reales). Para backtest real se necesita PAPER_TRADING con exchange conectado o un OhlcvSource CSV.
+- `SimpleMetricsCalculator._compute_sharpe` asume returns diarios y anualiza con sqrt(365). Para otras temporalidades es aproximado.
+
+---
+
 ## ⛔ Bloqueos
 
 _Ninguno actualmente._
@@ -321,6 +355,20 @@ _Ninguno actualmente._
 - ✅ PR body archivado en `docs/prs/done/h1-tick-pipeline.md` para referencia histórica.
 - 🎯 **PR #1 (H1) mergeado a dev** — primera historia cerrada del proyecto.
 - 🔒 Sandbox: registry npm ~14s/ping, install tomó ~5 min; tests/lint corren offline en ~5s cada uno.
+
+### 2026-06-08 — Sesión H8: Backtesting Engine
+- ✅ Branch `feature/h8-backtest-engine` creada desde `dev` (post-merge H6).
+- ✅ Domain: BacktestConfig, BacktestTrade, BacktestMetrics VOs + BacktestEngine entity con SignalFn, ATR SL, equity curve.
+- ✅ Ports: Strategy (protocol + SignalFn), BacktestReporter, MetricsCalculator.
+- ✅ Use Case: RunBacktestUseCase (pipeline completo con validaciones).
+- ✅ Estrategias: EmaCrossStrategy (9/21 EMA crossover), RsiMeanReversionStrategy (RSI-14, 30/70 thresholds), StrategyDictRegistry.
+- ✅ Métricas: SimpleMetricsCalculator — Sharpe anualizado, max drawdown, win rate, profit factor.
+- ✅ Reporter: FileBacktestReporter — JSON en reports/backtest/.
+- ✅ API: POST /backtest/run + GET /backtest/strategies (vía app.state, no singletons module-level).
+- ✅ Tests: 64 nuevos (21 VOs + 8 engine + 14 strategies + 10 metrics + 7 integration). 264/265 total.
+- 🐛 Bug fix: Decimal * float en ATR cálculo del engine (atr * 1.5 → atr * Decimal("1.5")). DivisionByZero en precios negativos (safety check entry_price > 0).
+- 🐛 Bug fix: singleton module-level en get_backtest_usecase() causaba tests no deterministas. Refactor a app.state como los otros use cases.
+- ✅ Validación: pytest 264/265, arch_lint PASS, secret_scan clean.
 
 ### 2026-06-08 — Sesión H6: NovaQuant ML Pipeline
 - ✅ NovaQuant completo: 9/9 tareas, 30 archivos nuevos.
