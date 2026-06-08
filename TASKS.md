@@ -1,8 +1,8 @@
 ---
 project: argos-bot
 total_tasks: 85
-completed: 76
-in_progress: 1
+completed: 85
+in_progress: 0
 blocked: 0
 overall_pct: 100
 last_updated: 2026-06-08
@@ -30,7 +30,7 @@ last_updated: 2026-06-08
 | H4-B  | OWASP Incident Response | ✅     | 100%   | 4/4    |
 | H5    | Secrets & Env Mode      | ✅     | 100%   | 4/4    |
 | H6    | NovaQuant ML Pipeline   | ✅     | 100%   | 9/9    |
-| H7    | Live Execution Engine   | 🟡     | 0%     | 0/9    |
+| H7    | Live Execution Engine   | ✅     | 100%   | 9/9    |
 | H8    | Backtesting Engine      | ✅     | 100%   | 9/9    |
 
 ---
@@ -247,28 +247,30 @@ last_updated: 2026-06-08
 
 ---
 
-## 🟡 H7 — Live Execution Engine
+## ✅ H7 — Live Execution Engine
 
 > Orquestador que cierra el bucle señal→orden→posición→P&L en tiempo real, conectando NovaQuant (H6), risk (H2/H3), y order placement (H4-A) en producción o paper trading.
 
 **Pipeline**: `TradingSignal` → SignalValidator (confidence + cooldown) → CircuitBreakerCheck → PositionSizer → PlaceOrderUseCase → PositionTracker (SL/TP loop) → ExecutionLogger.
 
-- [ ] H7-001 — Domain VOs: `ExecutionSignal` (side, confidence, symbol, strategy_id, timestamp), `LivePosition` (side, units, entry, current_price, unrealized_pnl, sl, tp, opened_at), `ExecutionReport` (signal_id, order_id, status, filled_qty, avg_price, pnl, errors[])
-- [ ] H7-002 — Domain entity: `SignalValidator` (confidence threshold, cooldown per symbol, dedup by signal_id), `PositionTracker` (SL/TP monitoring loop, adjust SL to breakeven after N%, P&L snapshot)
-- [ ] H7-003 — Ports: `SignalConsumer` (subscribe to signal sources), `PositionRepository` (save/load/update positions, list open), `ExecutionLogger` (log every execution event)
-- [ ] H7-004 — Use case: `ExecuteSignalUseCase` (validate → check CB → size → place order → persist position → log), `MonitorPositionsUseCase` (periodic SL/TP check → close if hit → log P&L)
-- [ ] H7-005 — Infrastructure: `NovaQuantSignalConsumer` (wraps NovaQuant predictor output into ExecutionSignal), `InMemoryPositionRepository` + `FilePositionRepository` (JSON persistence for restart recovery)
-- [ ] H7-006 — Infrastructure: `StructlogExecutionLogger` (structured JSON logs per execution event)
-- [ ] H7-007 — Integration wiring: `composition.py` with `get_execution_orchestrator(request)`, `get_position_repo(request)`, signal cooldown registry
-- [ ] H7-008 — API: `POST /execute/signal` (trigger signal manually), `GET /position/list` (open positions), `GET /execution/log` (recent executions)
-- [ ] H7-009 — Tests: unit (VOs, validators, tracker) + integration (endpoints, orchestration). 30+ new tests.
+- [x] H7-001 — Domain VOs: `ExecutionSignal` (side, confidence, symbol, strategy_id, timestamp — rejects HOLD, validates confidence/symbol), `LivePosition` (side, units, entry, sl/tp hit detection, PnL%, compute_pnl_at), `ExecutionReport` (signal_id, order_id, status, filled_qty, avg_price, pnl, errors[] — status validation)
+- [x] H7-002 — Domain entity: `SignalValidator` (confidence threshold, cooldown per symbol, dedup by signal_id, expiration), `PositionTracker` (stateless SL/TP checker, TrackResult verdict + PnL)
+- [x] H7-003 — Ports: `SignalConsumer` (async streaming protocol), `PositionRepository` (CRUD), `ExecutionLogger` (structured logging)
+- [x] H7-004 — Use case: `ExecuteSignalUseCase` (validate → CB check → balance+ATR → position sizing → order placement → persist → log), `MonitorPositionsUseCase` (periodic SL/TP loop, auto-close on hit)
+- [x] H7-005 — Infrastructure: `NovaQuantSignalConsumer` (adapts TradingSignal → ExecutionSignal), `InMemoryPositionRepository` + `FilePositionRepository` (JSON persistence, auto-creates dir)
+- [x] H7-006 — Infrastructure: `StructlogExecutionLogger` (structured JSON logs per execution event)
+- [x] H7-007 — Integration wiring: `composition.py` with `get_execute_signal_usecase`, `get_monitor_positions_usecase`, `get_position_repo` (all cached in app.state)
+- [x] H7-008 — API: `POST /execute/signal` (trigger signal manually), `GET /position/list` (open/all), `GET /execution/log` (recent executions) — 422 on rejection/error
+- [x] H7-009 — Tests: 59 new (21 unit VOs + 8 SignalValidator + 8 PositionTracker + 5 execute_signal + 5 monitor_positions + 7 integration endpoint + 5 integration list/log). 323/324 total pass (1 skipped).
 
-**Progreso**: 0/9 = **0%**
+**Progreso**: 9/9 = **100%**
 **Dependencias**: H2 (position sizing), H3 (circuit breaker check), H4-A (order placement), H6 (NovaQuant signals), H8 (strategy patterns)
 **Notas**:
 - H7 no introduce un nuevo exchange adapter; reusa CCXT de H4-A.
-- El loop de monitoreo corre como background task en FastAPI (asyncio.create_task o BackgroundTasks).
-- PositionRepository debe persistir a disco para sobrevivir reinicios (formato JSON simple, mismo patrón que FileBacktestReporter).
+- ExecuteSignalUseCase requiere signal.price — fallback a ATR como entry price rechazado (error).
+- SL = max(ATR * 1.5, entry * 0.005), clamped para evitar precios negativos/invertidos.
+- SignalValidator defaults: min_confidence=0.7, cooldown=60s, max_age=300s.
+- BACKTESTING mode usa `_FakeAtrCalculator` (ATR fijo=500), `MockBalanceProvider` (10k), `_NoopOrderClient`.
 
 ---
 
@@ -395,6 +397,21 @@ _Ninguno actualmente._
 - 🐛 Bug fix: Decimal * float en ATR cálculo del engine (atr * 1.5 → atr * Decimal("1.5")). DivisionByZero en precios negativos (safety check entry_price > 0).
 - 🐛 Bug fix: singleton module-level en get_backtest_usecase() causaba tests no deterministas. Refactor a app.state como los otros use cases.
 - ✅ Validación: pytest 264/265, arch_lint PASS, secret_scan clean.
+
+### 2026-06-08 — Sesión H7: Live Execution Engine
+- ✅ Branch `feature/h7-live-execution-engine` creada desde `dev` (post-merge H8).
+- ✅ H7-001: Domain VOs — ExecutionSignal (rejects HOLD, validates confidence/symbol), LivePosition (SL/TP hit, PnL%, compute_pnl_at), ExecutionReport (status validation).
+- ✅ H7-002: Domain entities — SignalValidator (confidence threshold, cooldown, dedup, expiration), PositionTracker (stateless SL/TP verdict + PnL).
+- ✅ H7-003: Ports — SignalConsumer (async generator protocol), PositionRepository (CRUD), ExecutionLogger (structured).
+- ✅ H7-004: Use cases — ExecuteSignalUseCase (validate → CB → size → place → persist → log), MonitorPositionsUseCase (SL/TP loop → auto-close).
+- ✅ H7-005/006: Infrastructure — NovaQuantSignalConsumer, InMemoryPositionRepository, FilePositionRepository (JSON), StructlogExecutionLogger.
+- ✅ H7-007: Composition wiring — 3 use case builders cached in app.state, BACKTESTING mode uses _FakeAtrCalculator/MockBalanceProvider/_NoopOrderClient.
+- ✅ H7-008: API — POST /execute/signal, GET /position/list, GET /execution/log (422 on error/rejection).
+- ✅ H7-009: Tests — 59 new (21 VOs + 8 SignalValidator + 8 PositionTracker + 5 execute_signal + 5 monitor_positions + 12 integration). 323/324 total pass (1 skipped).
+- 🐛 Bug fix: TaAtrCalculator no tenía `calculate()`, usa `get_atr()` que retorna `Atr` VO (no Decimal).
+- 🐛 Bug fix: ATR import faltante en composition.py (line 614 referenced `AtrCalculator` sin import). Añadido.
+- 🐛 Bug fix: Integration test cooldown collision entre `test_execute_buy` y `test_with_price` (mismo símbolo BTC/USDT). Cambiado a SOL/USDT.
+- ✅ Validación: pytest 323/324, arch_lint PASS, secret_scan clean.
 
 ### 2026-06-08 — Sesión H6: NovaQuant ML Pipeline
 - ✅ NovaQuant completo: 9/9 tareas, 30 archivos nuevos.

@@ -41,6 +41,7 @@ from .application.ports.environment_mode_writer import (
 from .application.ports.drawdown_snapshot_repo import (
     DrawdownSnapshotRepo,
 )
+from .application.ports.atr_calculator import AtrCalculator
 from .application.ports.backtest_reporter import BacktestReporter, MetricsCalculator
 from .application.ports.execution_logger import ExecutionLogger
 from .application.ports.incident_reporter import IncidentReporter
@@ -71,6 +72,7 @@ from .infrastructure.env_mode.file_env_mode_writer import (
     FileEnvironmentModeWriter,
 )
 from .infrastructure.exchange.ccxt_order_client import CcxtOrderClient
+from .domain.value_objects.atr import Atr
 from .infrastructure.indicators.ta_atr_calculator import TaAtrCalculator
 from .infrastructure.backtest.file_reporter import FileBacktestReporter
 from .infrastructure.backtest.metrics_calculator import SimpleMetricsCalculator
@@ -528,8 +530,15 @@ def get_execute_signal_usecase(request: Request) -> ExecuteSignalUseCase:
     comp = _comp(request)
 
     validator = SignalValidator()
-    balance_provider = comp.compute_position_size._balance_provider  # reuse H2
-    atr_calc = comp.compute_position_size._atr_calculator  # reuse H2
+
+    if comp.mode == "BACKTESTING":
+        balance_provider: BalanceProvider = MockBalanceProvider(Decimal("10000"))
+        atr_calc: AtrCalculator = _FakeAtrCalculator()
+    else:
+        balance_provider = CcxtBalanceProvider(exchange=comp.exchange)
+        atr_calc = TaAtrCalculator(
+            source=lambda s, t, w: ccxt_ohlcv_source(comp.exchange, s, t, w)
+        )
 
     import asyncio
 
@@ -601,6 +610,14 @@ def get_position_repo(request: Request) -> PositionRepository:
     repo = InMemoryPositionRepository()
     request.app.state.position_repo = repo
     return repo
+
+
+class _FakeAtrCalculator(AtrCalculator):
+    """Fixed ATR for BACKTESTING mode."""
+    async def get_atr(
+        self, symbol: str, timeframe: str = "1m", window: int = 14
+    ) -> Atr:
+        return Atr(500)
 
 
 class _FakeOhlcvSource:

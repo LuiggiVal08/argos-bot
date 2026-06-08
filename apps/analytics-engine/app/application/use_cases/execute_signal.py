@@ -102,7 +102,8 @@ class ExecuteSignalUseCase:
         # 3. Balance + ATR
         try:
             balance = await self._balance_provider.get_free_balance(signal.symbol)
-            atr = await self._atr_calculator.calculate(signal.symbol)
+            atr_value = await self._atr_calculator.get_atr(signal.symbol)
+            atr = atr_value.value
         except Exception as e:
             raise ExecuteSignalError(
                 f"failed to fetch market data: {e}"
@@ -110,7 +111,11 @@ class ExecuteSignalUseCase:
 
         # 4. Tamaño de posición
         risk_amount = balance * self._risk_pct
-        entry_price = signal.price or atr
+        entry_price = signal.price
+        if entry_price is None:
+            raise ExecuteSignalError(
+                "signal has no price — price provider required for live execution"
+            )
         if entry_price <= 0:
             raise ExecuteSignalError("invalid entry_price <= 0")
 
@@ -128,14 +133,23 @@ class ExecuteSignalUseCase:
             sl_price = entry_price + sl_distance
             tp_price = entry_price - (atr * self._tp_mult)
 
+        # Guard against negative/inverted SL/TP
+        if side == OrderSide.BUY:
+            sl_price = max(sl_price, Decimal("0.01"))
+            tp_price = max(tp_price, sl_price + Decimal("0.01"))
+        else:
+            sl_price = max(sl_price, entry_price + Decimal("0.01"))
+            tp_price = min(tp_price, entry_price - Decimal("0.01"))
+            tp_price = max(tp_price, Decimal("0.01"))
+
         # 6. Place order
         order = CompositeOrder(
             symbol=signal.symbol,
             side=side,
             entry_amount=units,
             entry_price=entry_price,
-            sl_price=max(sl_price, Decimal("0")),
-            tp_price=max(tp_price, Decimal("0")),
+            sl_price=sl_price,
+            tp_price=tp_price,
         )
         try:
             order_result = await self._exchange.place_composite_order(order)
