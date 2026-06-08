@@ -25,7 +25,8 @@ from .min_lot_provider import MarketConstraints, MinLotProvider, MinLotProviderE
 from .model_predictor import ModelPredictor, PredictionError
 from .model_trainer import ModelTrainer, TrainingError
 from .ohlcv_source import OhlcvSource, OhlcvSourceError
-from .signal_consumer import PositionRepository, SignalConsumer
+from .position_repository import PositionRepository
+from .signal_consumer import SignalConsumer
 from .strategy import Strategy, StrategyRegistry
 
 __all__ = [
