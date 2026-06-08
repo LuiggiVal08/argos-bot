@@ -28,7 +28,7 @@ last_updated: 2026-06-07
 | H3    | Circuit Breaker (5%)    | ✅     | 100%   | 9/9    |
 | H4-A  | Order Retry + Emergency | ✅     | 100%   | 7/7    |
 | H4-B  | OWASP Incident Response | ⬜     | 0%     | 0/4    |
-| H5    | Secrets & Env Mode      | ⬜     | 0%     | 0/4    |
+| H5    | Secrets & Env Mode      | 🟡     | 100%   | 4/4    |
 
 ---
 
@@ -185,18 +185,27 @@ last_updated: 2026-06-07
 
 ---
 
-## ⬜ H5 — Secrets & Env Mode
+## ✅ H5 — Secrets & Env Mode
 
-> spec.md §5 Historia 5. Variables de entorno, secretos, validación de modo.
+> spec.md §5 Historia 5. Variables de entorno, validación LIVE, pre-flight check.
 
-- [ ] H5-001 — Validación `config_toggle_mode` con sad path (LIVE sin secrets → abort exit 1)
-- [ ] H5-002 — Pre-flight check en LIVE mode al arranque
-- [ ] H5-003 — Plantilla `.env.example` completa (data-engine + analytics-engine)
-- [ ] H5-004 — Verificar lectura de secrets desde env (nunca hardcoded en código)
+**Pre-flight validator**: `app/preflight.py` con `preflight_check(mode)` y `abort_if_missing(mode)`. En LIVE, valida que existan y no estén vacías: `EXCHANGE_API_KEY`, `EXCHANGE_API_SECRET`, `ARGOS_BROKER_URL`. Si falta alguna → `sys.exit(1)`.
 
-**Progreso**: 0/4 = **0%**
+**Integración**: `build_composition()` llama `abort_if_missing(mode)` antes de construir el exchange. BACKTESTING/PAPER_TRADING son no-op.
+
+**.env.example**: ambos engines actualizados con secciones claras (Required / Required for LIVE / Optional / Risk defaults).
+
+- [x] H5-001 — Pre-flight validator (`preflight_check` + `abort_if_missing`) con sad path (LIVE sin secrets → exit 1)
+- [x] H5-002 — Integración en `build_composition()` antes de construir exchange
+- [x] H5-003 — `.env.example` completo (data-engine + analytics-engine) con secciones y defaults documentados
+- [x] H5-004 — Tests: 8 tests unitarios (modo, vars faltantes, vars vacías, abort exit), 116/116 passed, arch_lint PASS
+
+**Progreso**: 4/4 = **100%**
 **Dependencias**: ninguna
-**Notas**: el tool `config_toggle_mode` ya implementa la sad path; H5-001 lo mueve a la capa de aplicación del engine.
+**Notas**:
+- `REQUIRED_LIVE_VARS`: `EXCHANGE_API_KEY`, `EXCHANGE_API_SECRET`, `ARGOS_BROKER_URL`.
+- `OPTIONAL_LIVE_VARS`: `EXCHANGE_PASSPHRASE`, `EXCHANGE_ID`, `EXCHANGE_WS_URL` — documentados pero no validados.
+- La validación es temprana (en `build_composition()`) para que el engine nunca arranque parcialmente configurado en LIVE. `sys.exit(1)` es intencional: en Docker el contenedor se reinicia con error.
 
 ---
 
@@ -207,6 +216,14 @@ _Ninguno actualmente._
 ---
 
 ## Bitácora
+
+### 2026-06-07 — Sesión H5: Secrets & Env Mode
+- ✅ `app/preflight.py` — `preflight_check(mode)` y `abort_if_missing(mode)`. En LIVE valida `EXCHANGE_API_KEY`, `EXCHANGE_API_SECRET`, `ARGOS_BROKER_URL`. Missing/empty → `sys.exit(1)`.
+- ✅ Integrado en `build_composition()` como primer paso antes de construir exchange.
+- ✅ `.env.example` de ambos engines reestructurados con secciones: Required, Required for LIVE, Optional, Risk defaults.
+- ✅ Tests: 8 unitarios (BACKTESTING no-op, LIVE sin vars, LIVE con vars vacías, LIVE ok, abort exit code).
+- ✅ Validación: 116/116 tests, arch_lint PASS, secret_scan clean.
+- ✅ 1 commit conventional, push a `origin/feature/h5-env-secrets`.
 
 ### 2026-06-07 — Sesión H4-B: OWASP Incident Response
 - ✅ `docs/incident-response.md` — 4 fases OWASP con SLAs, responsables, runbook, clasificación P1-P4.
