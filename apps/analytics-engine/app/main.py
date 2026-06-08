@@ -8,13 +8,14 @@ from contextlib import asynccontextmanager
 import redis.asyncio as redis
 from fastapi import FastAPI
 
-from .api import circuit_breaker_router, risk_router
+from .api import circuit_breaker_router, order_router, risk_router
 from .composition import Composition, build_composition
 
 log = structlog.get_logger()
 app = FastAPI(title="argos-analytics-engine", version="0.0.1")
 app.include_router(risk_router)
 app.include_router(circuit_breaker_router)
+app.include_router(order_router)
 
 
 @asynccontextmanager
