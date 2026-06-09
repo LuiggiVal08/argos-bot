@@ -9,3 +9,5 @@ pydantic>=2.6
 pydantic-settings>=2.2
 python-dotenv>=1.0
 structlog>=24.1
+pyarrow>=15.0
+tqdm>=4.66
