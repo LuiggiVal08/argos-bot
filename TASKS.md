@@ -421,6 +421,23 @@ _Ninguno actualmente._
 - 🐛 Bug fix: singleton module-level en get_backtest_usecase() causaba tests no deterministas. Refactor a app.state como los otros use cases.
 - ✅ Validación: pytest 264/265, arch_lint PASS, secret_scan clean.
 
+### 2026-06-09 — Sesión: CcxtBinanceTestnetAdapter (Spot Testnet)
+- ✅ Agregado `close_position(symbol)` al port `ExchangeOrderClient`
+- ✅ Actualizado `_NoopOrderClient` y `CcxtOrderClient` con `close_position`
+- ✅ Creado `infrastructure/trading/ccxt_binance_adapter.py` — `CcxtBinanceTestnetAdapter` con ExchangeOrderClient + PriceProvider
+- ✅ Wiring en `composition.py`: `_build_exchange()` detecta `BINANCE_TESTNET=true`, crea exchange Spot con sandbox mode
+- ✅ `_build_order_client()` helper retorna `CcxtBinanceTestnetAdapter` o `CcxtOrderClient` según modo
+- ✅ `MonitorPositionsUseCase` ahora usa `CcxtBinanceTestnetAdapter.get_price()` real en testnet (con cache 1s)
+- ✅ `preflight.py` valida `BINANCE_TESTNET_API_KEY`/`SECRET` en LIVE+testnet
+- ✅ 20 tests unitarios (get_price, close_position, cancel_all, place_composite, emergency, close_all)
+- ✅ 357/358 pytest pass (1 skipped), arch_lint PASS, secret_scan clean (solo falsos positivos en skills/)
+
+### 2026-06-09 — Release v0.1.0
+- ✅ PR `dev → main` mergeado por el usuario.
+- ✅ Tag `v0.1.0` creado y pusheado a `origin`.
+- **Estado**: 94/94 tareas, 337 tests, arch_lint PASS. MVP completo.
+- **Próximo**: definir roadmap post-MVP.
+
 ### 2026-06-09 — Sesión H9: Telemetry Webhooks (merge a dev)
 - ✅ PR mergeado a `dev` por el usuario.
 - ✅ Rama `feature/h6-telemetry-webhooks` borrada (local + origin).

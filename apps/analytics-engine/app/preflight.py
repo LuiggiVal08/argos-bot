@@ -21,12 +21,18 @@ OPTIONAL_LIVE_VARS: tuple[str, str, ...] = (
     "EXCHANGE_WS_URL",
 )
 
+TESTNET_VARS: tuple[str, str, ...] = (
+    "BINANCE_TESTNET_API_KEY",
+    "BINANCE_TESTNET_SECRET",
+)
+
 
 def preflight_check(mode: str) -> list[str]:
     """Return a list of missing-var error messages.
     If the list is empty, all checks passed.
 
     In LIVE mode, REQUIRED_LIVE_VARS must be set and non-empty.
+    When BINANCE_TESTNET is true, TESTNET_VARS must also be set.
     In non-LIVE modes, no vars are strictly required (they may be
     mocked or defaulted).
     """
@@ -40,6 +46,14 @@ def preflight_check(mode: str) -> list[str]:
             errors.append(
                 f"LIVE mode requires {var} to be set and non-empty"
             )
+
+    if os.environ.get("BINANCE_TESTNET", "false").lower() == "true":
+        for var in TESTNET_VARS:
+            val = os.environ.get(var)
+            if not val:
+                errors.append(
+                    f"BINANCE_TESTNET mode requires {var} to be set and non-empty"
+                )
 
     return errors
 
