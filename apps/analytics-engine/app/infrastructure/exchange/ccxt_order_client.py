@@ -101,6 +101,43 @@ class CcxtOrderClient(ExchangeOrderClient):
                 )
         return closed
 
+    async def close_position(self, symbol: str) -> PositionSummary:
+        """Close the active position for a single symbol in futures.
+        Fetches current position and issues a reduce-only market order
+        on the opposite side."""
+        try:
+            positions = await self._exchange.fetch_positions([symbol])
+        except Exception as e:
+            raise ExchangeOrderClientError(
+                f"fetch_positions_failed: {symbol}: {e}"
+            ) from e
+        for p in positions:
+            amt = Decimal(str(p.get("contracts") or p.get("amount") or 0))
+            if amt == 0:
+                continue
+            side = "buy" if (p.get("side") or "").lower() == "short" else "sell"
+            try:
+                await self._exchange.create_order(
+                    symbol,
+                    type="market",
+                    side=side,
+                    amount=abs(float(amt)),
+                    params={"reduceOnly": True},
+                )
+            except Exception as e:
+                raise ExchangeOrderClientError(
+                    f"close_position_failed: {symbol} {p.get('side')} {amt}: {e}"
+                ) from e
+            return PositionSummary(
+                symbol=symbol,
+                side=str(p.get("side") or ""),
+                quantity=amt,
+                entry_price=Decimal(str(p.get("entryPrice") or 0)),
+            )
+        raise ExchangeOrderClientError(
+            f"no_position_found: {symbol}"
+        )
+
     async def place_composite_order(
         self, order: CompositeOrder
     ) -> OrderResult:

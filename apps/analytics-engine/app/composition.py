@@ -74,6 +74,9 @@ from .infrastructure.env_mode.file_env_mode_writer import (
     FileEnvironmentModeWriter,
 )
 from .infrastructure.exchange.ccxt_order_client import CcxtOrderClient
+from .infrastructure.trading.ccxt_binance_adapter import (
+    CcxtBinanceTestnetAdapter,
+)
 from .domain.value_objects.atr import Atr
 from .infrastructure.indicators.ta_atr_calculator import TaAtrCalculator
 from .infrastructure.backtest.file_reporter import FileBacktestReporter
@@ -130,14 +133,41 @@ def _env_mode() -> str:
     return os.environ.get("ENVIRONMENT_MODE", "PAPER_TRADING").upper()
 
 
+def _is_testnet() -> bool:
+    return os.environ.get("BINANCE_TESTNET", "false").lower() == "true"
+
+
+def _build_order_client(exchange: ccxt.Exchange) -> ExchangeOrderClient:
+    """Return the appropriate order client based on testnet mode.
+
+    In testnet mode, uses CcxtBinanceTestnetAdapter (Spot).
+    Otherwise uses CcxtOrderClient (futures)."""
+    if _is_testnet():
+        return CcxtBinanceTestnetAdapter(exchange=exchange)
+    return CcxtOrderClient(exchange=exchange)
+
+
 def _build_exchange() -> ccxt.Exchange:
     """Build a single CCXT exchange instance for the engine.
 
     The exchange id is read from `EXCHANGE_ID` (default: binanceusdm
-    for USDT-margined perpetuals, the canonical venue for H2 testing).
-    Credentials are pulled from env vars; the constructor raises if
-    they're missing in LIVE mode (see spec sad path).
+    for USDT-margined perpetuals). Credentials are pulled from env vars;
+    the constructor raises if they're missing in LIVE mode.
+
+    When BINANCE_TESTNET=true, creates a Binance Spot exchange with
+    sandbox mode enabled, reading BINANCE_TESTNET_API_KEY / _SECRET.
     """
+    if _is_testnet():
+        api_key = os.environ["BINANCE_TESTNET_API_KEY"]
+        api_secret = os.environ["BINANCE_TESTNET_SECRET"]
+        ex: ccxt.Exchange = getattr(ccxt, "binance")({
+            "apiKey": api_key,
+            "secret": api_secret,
+            "enableRateLimit": True,
+        })
+        ex.set_sandbox_mode(True)
+        return ex
+
     ex_id = os.environ.get("EXCHANGE_ID", "binanceusdm")
     klass: Any = getattr(ccxt, ex_id, None)
     if klass is None:
@@ -235,7 +265,7 @@ def _build_h3(
     else:
         if exchange is None:
             raise RuntimeError("exchange is None in non-BACKTESTING mode")
-        order_client = CcxtOrderClient(exchange=exchange)
+        order_client = _build_order_client(exchange)
 
     trip = TripCircuitBreakerUseCase(
         order_client=order_client,
@@ -261,6 +291,13 @@ class _NoopOrderClient(ExchangeOrderClient):
 
     async def close_all_positions(self) -> list[Any]:
         return []
+
+    async def close_position(self, symbol: str) -> Any:
+        from .application.ports.exchange_order_client import PositionSummary
+        return PositionSummary(
+            symbol=symbol, side="long", quantity=Decimal("0"),
+            entry_price=Decimal("0"),
+        )
 
     async def place_composite_order(
         self, order: Any
@@ -329,7 +366,7 @@ def build_composition() -> Composition:
     else:
         if exchange is None:
             raise RuntimeError("exchange is None in non-BACKTESTING mode")
-        order_client_for_placement = CcxtOrderClient(exchange=exchange)
+        order_client_for_placement = _build_order_client(exchange)
     place_order_uc = PlaceOrderUseCase(
         order_client=order_client_for_placement
     )
@@ -575,7 +612,7 @@ def get_execute_signal_usecase(request: Request) -> ExecuteSignalUseCase:
             return False
         drawdown_checker = _not_halted
     else:
-        exchange_client = CcxtOrderClient(exchange=comp.exchange)
+        exchange_client = _build_order_client(comp.exchange)
         async def _check_halted() -> bool:
             return comp.check_drawdown.is_halted()
         drawdown_checker = _check_halted
@@ -611,16 +648,20 @@ def get_monitor_positions_usecase(request: Request) -> MonitorPositionsUseCase:
     if comp.mode == "BACKTESTING":
         exchange_client: ExchangeOrderClient = _NoopOrderClient()
     else:
-        exchange_client = CcxtOrderClient(exchange=comp.exchange)
+        exchange_client = _build_order_client(comp.exchange)
 
-    async def _fake_price(symbol: str) -> Decimal:
-        return Decimal("0")
+    if _is_testnet() and hasattr(exchange_client, "get_price"):
+        price_provider = exchange_client.get_price  # type: ignore[union-attr]
+    else:
+        async def _fake_price(symbol: str) -> Decimal:
+            return Decimal("0")
+        price_provider = _fake_price
 
     use_case = MonitorPositionsUseCase(
         position_repo=position_repo,
         exchange_client=exchange_client,
         execution_logger=execution_logger,
-        price_provider=_fake_price,
+        price_provider=price_provider,
     )
     request.app.state.monitor_positions_usecase = use_case
     return use_case
