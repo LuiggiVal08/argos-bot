@@ -41,14 +41,19 @@ from .application.ports.environment_mode_writer import (
 from .application.ports.drawdown_snapshot_repo import (
     DrawdownSnapshotRepo,
 )
+from .application.ports.atr_calculator import AtrCalculator
 from .application.ports.backtest_reporter import BacktestReporter, MetricsCalculator
+from .application.ports.execution_logger import ExecutionLogger
 from .application.ports.incident_reporter import IncidentReporter
 from .application.ports.incident_repository import IncidentRepository
+from .application.ports.position_repository import PositionRepository
 from .application.use_cases.check_drawdown import CheckDrawdownUseCase
 from .application.use_cases.compute_position_size import (
     ComputePositionSizeUseCase,
 )
+from .application.use_cases.execute_signal import ExecuteSignalUseCase
 from .application.use_cases.list_incidents import ListIncidentsUseCase
+from .application.use_cases.monitor_positions import MonitorPositionsUseCase
 from .application.use_cases.open_day import OpenDayUseCase
 from .application.use_cases.place_order import PlaceOrderUseCase
 from .application.use_cases.predict_signal import PredictSignalUseCase
@@ -60,15 +65,19 @@ from .application.use_cases.trip_circuit_breaker import (
 )
 from .domain.entities.circuit_breaker import CircuitBreaker
 from .domain.entities.risk_calculator import RiskCalculator
+from .domain.entities.signal_validator import SignalValidator
 from .infrastructure.balance.ccxt_balance_provider import CcxtBalanceProvider
 from .infrastructure.balance.mock_balance_provider import MockBalanceProvider
 from .infrastructure.env_mode.file_env_mode_writer import (
     FileEnvironmentModeWriter,
 )
 from .infrastructure.exchange.ccxt_order_client import CcxtOrderClient
+from .domain.value_objects.atr import Atr
 from .infrastructure.indicators.ta_atr_calculator import TaAtrCalculator
 from .infrastructure.backtest.file_reporter import FileBacktestReporter
 from .infrastructure.backtest.metrics_calculator import SimpleMetricsCalculator
+from .infrastructure.execution.in_memory_position_repo import InMemoryPositionRepository
+from .infrastructure.execution.structlog_execution_logger import StructlogExecutionLogger
 from .infrastructure.journal.in_memory_snapshot_repo import InMemorySnapshotRepo
 from .infrastructure.journal.in_memory_trade_journal import InMemoryTradeJournal
 from .infrastructure.market.ccxt_min_lot_provider import CcxtMinLotProvider
@@ -505,6 +514,110 @@ class _CcxtOhlcvAdapter:
     ) -> list[dict]:
         df = await ccxt_ohlcv_source(self._exchange, symbol, timeframe, limit)
         return df.to_dict("records")
+
+
+# H7 — Live Execution Engine (cached in app.state) ----------------------------
+
+
+def get_execute_signal_usecase(request: Request) -> ExecuteSignalUseCase:
+    """Return the ExecuteSignalUseCase, cached in app.state."""
+    cached: ExecuteSignalUseCase | None = getattr(
+        request.app.state, "execute_signal_usecase", None
+    )
+    if cached is not None:
+        return cached
+
+    comp = _comp(request)
+
+    validator = SignalValidator()
+
+    if comp.mode == "BACKTESTING":
+        balance_provider: BalanceProvider = MockBalanceProvider(Decimal("10000"))
+        atr_calc: AtrCalculator = _FakeAtrCalculator()
+    else:
+        balance_provider = CcxtBalanceProvider(exchange=comp.exchange)
+        atr_calc = TaAtrCalculator(
+            source=lambda s, t, w: ccxt_ohlcv_source(comp.exchange, s, t, w)
+        )
+
+    import asyncio
+
+    if comp.mode == "BACKTESTING":
+        exchange_client: ExchangeOrderClient = _NoopOrderClient()
+        async def _not_halted() -> bool:
+            return False
+        drawdown_checker = _not_halted
+    else:
+        exchange_client = CcxtOrderClient(exchange=comp.exchange)
+        async def _check_halted() -> bool:
+            return comp.check_drawdown.is_halted()
+        drawdown_checker = _check_halted
+
+    position_repo = get_position_repo(request)
+    execution_logger = StructlogExecutionLogger()
+
+    use_case = ExecuteSignalUseCase(
+        signal_validator=validator,
+        balance_provider=balance_provider,
+        atr_calculator=atr_calc,
+        exchange_client=exchange_client,
+        position_repo=position_repo,
+        execution_logger=execution_logger,
+        is_halted=drawdown_checker,
+    )
+    request.app.state.execute_signal_usecase = use_case
+    return use_case
+
+
+def get_monitor_positions_usecase(request: Request) -> MonitorPositionsUseCase:
+    """Return the MonitorPositionsUseCase, cached in app.state."""
+    cached: MonitorPositionsUseCase | None = getattr(
+        request.app.state, "monitor_positions_usecase", None
+    )
+    if cached is not None:
+        return cached
+
+    position_repo = get_position_repo(request)
+    execution_logger = StructlogExecutionLogger()
+
+    comp = _comp(request)
+    if comp.mode == "BACKTESTING":
+        exchange_client: ExchangeOrderClient = _NoopOrderClient()
+    else:
+        exchange_client = CcxtOrderClient(exchange=comp.exchange)
+
+    async def _fake_price(symbol: str) -> Decimal:
+        return Decimal("0")
+
+    use_case = MonitorPositionsUseCase(
+        position_repo=position_repo,
+        exchange_client=exchange_client,
+        execution_logger=execution_logger,
+        price_provider=_fake_price,
+    )
+    request.app.state.monitor_positions_usecase = use_case
+    return use_case
+
+
+def get_position_repo(request: Request) -> PositionRepository:
+    """Return the PositionRepository, cached in app.state."""
+    cached: PositionRepository | None = getattr(
+        request.app.state, "position_repo", None
+    )
+    if cached is not None:
+        return cached
+
+    repo = InMemoryPositionRepository()
+    request.app.state.position_repo = repo
+    return repo
+
+
+class _FakeAtrCalculator(AtrCalculator):
+    """Fixed ATR for BACKTESTING mode."""
+    async def get_atr(
+        self, symbol: str, timeframe: str = "1m", window: int = 14
+    ) -> Atr:
+        return Atr(500)
 
 
 class _FakeOhlcvSource:

@@ -3,7 +3,11 @@ from .atr import Atr, InvalidAtrError
 from .backtest_config import BacktestConfig
 from .backtest_metrics import BacktestMetrics
 from .backtest_trade import BacktestTrade
+from .execution_report import ExecutionReport
+from .execution_signal import ExecutionSignal
+from .live_position import LivePosition
 from .model_config import ModelConfig
+from .order import OrderSide, OrderStatus, OrderType
 from .position_size import PositionSize
 from .risk_pct import (
     DEFAULT_RISK_PCT,
@@ -20,12 +24,18 @@ __all__ = [
     "BacktestConfig",
     "BacktestMetrics",
     "BacktestTrade",
+    "ExecutionReport",
+    "ExecutionSignal",
+    "LivePosition",
+    "ModelConfig",
+    "OrderSide",
+    "OrderStatus",
+    "OrderType",
+    "PositionSize",
     "RiskPct",
     "InvalidRiskPctError",
     "DEFAULT_RISK_PCT",
     "MAX_RISK_PCT",
-    "PositionSize",
-    "ModelConfig",
     "SignalSide",
     "TradingSignal",
 ]
