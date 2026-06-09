@@ -14,6 +14,7 @@ from .api import (
     execution_router,
     incident_router,
     model_router,
+    notification_router,
     order_router,
     risk_router,
 )
@@ -28,6 +29,7 @@ app.include_router(model_router)
 app.include_router(order_router)
 app.include_router(backtest_router)
 app.include_router(execution_router)
+app.include_router(notification_router)
 
 
 @asynccontextmanager

@@ -1,11 +1,11 @@
 ---
 project: argos-bot
-total_tasks: 85
-completed: 85
+total_tasks: 94
+completed: 94
 in_progress: 0
 blocked: 0
 overall_pct: 100
-last_updated: 2026-06-08
+last_updated: 2026-06-09
 ---
 
 # TASKS — argos-bot
@@ -32,6 +32,7 @@ last_updated: 2026-06-08
 | H6    | NovaQuant ML Pipeline   | ✅     | 100%   | 9/9    |
 | H7    | Live Execution Engine   | ✅     | 100%   | 9/9    |
 | H8    | Backtesting Engine      | ✅     | 100%   | 9/9    |
+| H9    | Telemetry Webhooks      | ✅     | 100%   | 9/9    |
 
 ---
 
@@ -307,7 +308,29 @@ last_updated: 2026-06-08
 
 ---
 
-## ⛔ Bloqueos
+## ✅ H9 — Telemetry Webhooks (Telegram/Discord)
+
+> Adaptadores ligeros para notificaciones vía webhooks Telegram/Discord. Analytics-engine publica eventos a Redis stream `notifications:events`; Data-engine (Node/NestJS) consume y dispara HTTP.
+
+**Arquitectura**: `ExecuteSignalUseCase` → `NotifyOnEventUseCase` → `RedisNotifier` → XADD a `notifications:events` → `NotificationConsumer` (NestJS XREAD) → Telegram/Discord HTTP POST
+
+- [x] H9-001 — Domain VOs: `NotificationEvent` (frozen dataclass con event_type, severity, title, message, symbol, metadata, timestamp), `NotificationSeverity` (INFO/WARN/CRITICAL), `NotificationEventType` (7 tipos)
+- [x] H9-002 — Ports: `Notifier` protocol (async send)
+- [x] H9-003 — Use case: `NotifyOnEventUseCase` (dispara notifier con evento)
+- [x] H9-004 — Infra Python: `LoggingNotifier` (structlog), `RedisNotifier` (XADD a `notifications:events`), `CompositeNotifier` (fan-out)
+- [x] H9-005 — Composition Python: wiring en `build_composition()`, modo BACKTESTING usa solo LoggingNotifier, PAPER/LIVE añade RedisNotifier
+- [x] H9-006 — Infra Node: `TelegramNotifier` (fetch POST a Bot API), `DiscordNotifier` (fetch POST a webhook), `NotificationConsumer` (NestJS OnModuleInit/OnModuleDestroy, XREAD loop)
+- [x] H9-007 — API: `POST /notification/test`, `GET /notification/status`
+- [x] H9-008 — Env vars: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `DISCORD_WEBHOOK_URL` documentados en `.env.example` de ambos engines
+- [x] H9-009 — Tests: 14 nuevos (6 VOs + 5 unit infra + 1 use case + 2 integration). 337/338 total pass (1 skipped). TypeScript typecheck PASS.
+
+**Progreso**: 9/9 = **100%**
+**Dependencias**: H7 (execute_signal, monitor_positions), H3 (circuit breaker), H4-B (incident reporting)
+**Notas**:
+- El dispatch HTTP corre en Node (data-engine), no en Python. Python solo publica a Redis.
+- `fetch()` global de Node 18+ usado para webhooks — sin dependencias nuevas.
+- Si ninguna token/webhook env var está configurada, notificaciones son no-op (solo log).
+- BACKTESTING mode no publica a Redis (solo LoggingNotifier).
 
 _Ninguno actualmente._
 
@@ -397,6 +420,19 @@ _Ninguno actualmente._
 - 🐛 Bug fix: Decimal * float en ATR cálculo del engine (atr * 1.5 → atr * Decimal("1.5")). DivisionByZero en precios negativos (safety check entry_price > 0).
 - 🐛 Bug fix: singleton module-level en get_backtest_usecase() causaba tests no deterministas. Refactor a app.state como los otros use cases.
 - ✅ Validación: pytest 264/265, arch_lint PASS, secret_scan clean.
+
+### 2026-06-09 — Sesión H9: Telemetry Webhooks (Telegram/Discord)
+- ✅ Branch `feature/h9-telemetry-webhooks` creada desde `dev`.
+- ✅ Domain VO: NotificationEvent, NotificationSeverity, NotificationEventType.
+- ✅ Port: Notifier protocol (Python), implementado en LoggingNotifier + RedisNotifier + CompositeNotifier.
+- ✅ Use case: NotifyOnEventUseCase — dispara notifier con evento.
+- ✅ API: POST /notification/test, GET /notification/status.
+- ✅ Composition: wiring con RedisNotifier en PAPER/LIVE, LoggingNotifier en BACKTESTING.
+- ✅ Node/NestJS: TelegramNotifier, DiscordNotifier, NotificationConsumer (XREAD + HTTP POST via fetch).
+- ✅ Env vars: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, DISCORD_WEBHOOK_URL en .env.example de ambos engines.
+- ✅ Tests: 14 nuevos (Python). 337/338 total pass. TypeScript typecheck PASS. arch_lint PASS. secret_scan clean.
+- 🐛 Bug fix: RedisNotifier test assertion usaba index wrong (call[0] vs call.args). Corregido.
+- 🎯 Branch local lista para push + PR.
 
 ### 2026-06-08 — Sesión H7: Live Execution Engine (merge a dev)
 - ✅ PR #7 mergeado a `dev` por el usuario.
