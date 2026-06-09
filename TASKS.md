@@ -398,6 +398,12 @@ _Ninguno actualmente._
 - 🐛 Bug fix: singleton module-level en get_backtest_usecase() causaba tests no deterministas. Refactor a app.state como los otros use cases.
 - ✅ Validación: pytest 264/265, arch_lint PASS, secret_scan clean.
 
+### 2026-06-08 — Sesión H7: Live Execution Engine (merge a dev)
+- ✅ PR #7 mergeado a `dev` por el usuario.
+- ✅ Rama `feature/h7-live-execution-engine` borrada (local + origin).
+- **Estado**: 9/9 tareas, 85/85 total, 323 tests, arch_lint PASS, secret_scan clean.
+- **Próximo**: H7 está en `dev`. Listo para release cuando se definan las próximas historias.
+
 ### 2026-06-08 — Sesión H7: Live Execution Engine
 - ✅ Branch `feature/h7-live-execution-engine` creada desde `dev` (post-merge H8).
 - ✅ H7-001: Domain VOs — ExecutionSignal (rejects HOLD, validates confidence/symbol), LivePosition (SL/TP hit, PnL%, compute_pnl_at), ExecutionReport (status validation).
