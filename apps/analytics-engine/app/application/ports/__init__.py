@@ -20,6 +20,7 @@ from .data_preprocessor import (
 from .execution_logger import ExecutionLogger
 from .feature_analyzer import AnalysisError, FeatureAnalyzer
 from .incident_reporter import IncidentReporter
+from .notifier import Notifier
 from .incident_repository import IncidentRepository
 from .min_lot_provider import MarketConstraints, MinLotProvider, MinLotProviderError
 from .model_predictor import ModelPredictor, PredictionError
@@ -43,6 +44,7 @@ __all__ = [
     "ExecutionLogger",
     "FeatureAnalyzer",
     "IncidentReporter",
+    "Notifier",
     "IncidentRepository",
     "InsufficientDataError",
     "MarketConstraints",

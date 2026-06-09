@@ -7,6 +7,7 @@ from .check_drawdown import (
 from .execute_signal import ExecuteSignalUseCase, ExecuteSignalError, ExecuteSignalResult
 from .list_incidents import ListIncidentsUseCase
 from .monitor_positions import MonitorPositionsUseCase, MonitorPositionsError, MonitorResult
+from .notify_on_event import NotifyOnEventUseCase
 from .open_day import OpenDayUseCase, OpenDayError
 from .place_order import PlaceOrderUseCase, PlaceOrderError, PlaceOrderResult
 from .predict_signal import (
@@ -44,6 +45,7 @@ __all__ = [
     "MonitorPositionsError",
     "MonitorPositionsUseCase",
     "MonitorResult",
+    "NotifyOnEventUseCase",
     "OpenDayUseCase",
     "OpenDayError",
     "PlaceOrderUseCase",

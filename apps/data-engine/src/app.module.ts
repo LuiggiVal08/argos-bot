@@ -19,6 +19,7 @@ import { IngestTickUseCase } from "./application/use-cases/ingest-tick.usecase"
 import { BufferTickUseCase } from "./application/use-cases/buffer-tick.usecase"
 import { FlushBufferUseCase } from "./application/use-cases/flush-buffer.usecase"
 import { HealthMonitorUseCase } from "./application/use-cases/health-monitor.usecase"
+import { NotificationConsumer } from "./infrastructure/notification/notification-consumer"
 import { TickPipelineService } from "./infrastructure/services/tick-pipeline.service"
 
 const log = (m: string): void => {
@@ -124,6 +125,7 @@ const healthMonitorUseCaseProvider: Provider = {
     flushProvider,
     healthMonitorUseCaseProvider,
     TickPipelineService,
+    NotificationConsumer,
   ],
 })
 export class AppModule {}

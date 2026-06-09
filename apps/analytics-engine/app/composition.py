@@ -45,6 +45,7 @@ from .application.ports.atr_calculator import AtrCalculator
 from .application.ports.backtest_reporter import BacktestReporter, MetricsCalculator
 from .application.ports.execution_logger import ExecutionLogger
 from .application.ports.incident_reporter import IncidentReporter
+from .application.ports.notifier import Notifier
 from .application.ports.incident_repository import IncidentRepository
 from .application.ports.position_repository import PositionRepository
 from .application.use_cases.check_drawdown import CheckDrawdownUseCase
@@ -54,6 +55,7 @@ from .application.use_cases.compute_position_size import (
 from .application.use_cases.execute_signal import ExecuteSignalUseCase
 from .application.use_cases.list_incidents import ListIncidentsUseCase
 from .application.use_cases.monitor_positions import MonitorPositionsUseCase
+from .application.use_cases.notify_on_event import NotifyOnEventUseCase
 from .application.use_cases.open_day import OpenDayUseCase
 from .application.use_cases.place_order import PlaceOrderUseCase
 from .application.use_cases.predict_signal import PredictSignalUseCase
@@ -87,6 +89,10 @@ from .infrastructure.monitoring.in_memory_incident_repo import (
 from .infrastructure.monitoring.logging_incident_reporter import (
     LoggingIncidentReporter,
 )
+from .infrastructure.notification.composite_notifier import (
+    CompositeNotifier,
+)
+from .infrastructure.notification.logging_notifier import LoggingNotifier
 from .infrastructure.ohlcv.ccxt_ohlcv_source import ccxt_ohlcv_source
 from .infrastructure.strategies.registry import StrategyDictRegistry
 
@@ -116,6 +122,8 @@ class Composition:
     circuit_breaker: CircuitBreaker
     exchange: ccxt.Exchange | None
     mode: str
+    notifier: Notifier
+    notify_on_event: NotifyOnEventUseCase
 
 
 def _env_mode() -> str:
@@ -334,6 +342,17 @@ def build_composition() -> Composition:
     )
     list_incidents_uc = ListIncidentsUseCase(repo=incident_repo)
 
+    # H6 wiring — Notifications (publish events to Redis stream)
+    if mode == "BACKTESTING":
+        notifier: Notifier = LoggingNotifier()
+    else:
+        from .infrastructure.notification.redis_notifier import RedisNotifier
+        channels: list[Notifier] = [LoggingNotifier()]
+        redis_url = os.environ.get("ARGOS_BROKER_URL", "redis://localhost:6379")
+        channels.append(RedisNotifier(redis_url=redis_url))
+        notifier = CompositeNotifier(channels)
+    notify_on_event_uc = NotifyOnEventUseCase(notifier=notifier)
+
     return Composition(
         compute_position_size=compute_position_size,
         check_drawdown=check,
@@ -350,6 +369,8 @@ def build_composition() -> Composition:
         circuit_breaker=circuit_breaker,
         exchange=exchange,
         mode=mode,
+        notifier=notifier,
+        notify_on_event=notify_on_event_uc,
     )
 
 
@@ -393,6 +414,12 @@ def get_list_incidents_usecase(
     request: Request,
 ) -> ListIncidentsUseCase:
     return _comp(request).list_incidents
+
+
+def get_notify_on_event_usecase(
+    request: Request,
+) -> NotifyOnEventUseCase:
+    return _comp(request).notify_on_event
 
 
 # H8 — Backtest use cases (cached in app.state) --------------------------------
