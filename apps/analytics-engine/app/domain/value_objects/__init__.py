@@ -1,19 +1,45 @@
 """Domain value objects."""
 from .atr import Atr, InvalidAtrError
+from .backtest_config import BacktestConfig
+from .backtest_metrics import BacktestMetrics
+from .backtest_trade import BacktestTrade
+from .execution_report import ExecutionReport
+from .execution_signal import ExecutionSignal
+from .live_position import LivePosition
+from .model_config import ModelConfig
+from .notification import NotificationEvent, NotificationEventType, NotificationSeverity
+from .order import OrderSide, OrderStatus, OrderType
+from .position_size import PositionSize
 from .risk_pct import (
     DEFAULT_RISK_PCT,
     MAX_RISK_PCT,
     InvalidRiskPctError,
     RiskPct,
 )
-from .position_size import PositionSize
+from .signal_side import SignalSide
+from .trading_signal import TradingSignal
 
 __all__ = [
     "Atr",
     "InvalidAtrError",
+    "BacktestConfig",
+    "BacktestMetrics",
+    "BacktestTrade",
+    "ExecutionReport",
+    "ExecutionSignal",
+    "LivePosition",
+    "ModelConfig",
+    "NotificationEvent",
+    "NotificationEventType",
+    "NotificationSeverity",
+    "OrderSide",
+    "OrderStatus",
+    "OrderType",
+    "PositionSize",
     "RiskPct",
     "InvalidRiskPctError",
     "DEFAULT_RISK_PCT",
     "MAX_RISK_PCT",
-    "PositionSize",
+    "SignalSide",
+    "TradingSignal",
 ]

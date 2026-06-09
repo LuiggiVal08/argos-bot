@@ -1,11 +1,11 @@
 ---
 project: argos-bot
-total_tasks: 58
-completed: 54
+total_tasks: 94
+completed: 94
 in_progress: 0
 blocked: 0
-overall_pct: 93
-last_updated: 2026-06-07
+overall_pct: 100
+last_updated: 2026-06-09
 ---
 
 # TASKS — argos-bot
@@ -27,8 +27,12 @@ last_updated: 2026-06-07
 | H2    | Position Sizing (≤1%)   | ✅     | 100%   | 9/9    |
 | H3    | Circuit Breaker (5%)    | ✅     | 100%   | 9/9    |
 | H4-A  | Order Retry + Emergency | ✅     | 100%   | 7/7    |
-| H4-B  | OWASP Incident Response | ⬜     | 0%     | 0/4    |
-| H5    | Secrets & Env Mode      | 🟡     | 100%   | 4/4    |
+| H4-B  | OWASP Incident Response | ✅     | 100%   | 4/4    |
+| H5    | Secrets & Env Mode      | ✅     | 100%   | 4/4    |
+| H6    | NovaQuant ML Pipeline   | ✅     | 100%   | 9/9    |
+| H7    | Live Execution Engine   | ✅     | 100%   | 9/9    |
+| H8    | Backtesting Engine      | ✅     | 100%   | 9/9    |
+| H9    | Telemetry Webhooks      | ✅     | 100%   | 9/9    |
 
 ---
 
@@ -183,8 +187,6 @@ last_updated: 2026-06-07
 
 ---
 
----
-
 ## ✅ H5 — Secrets & Env Mode
 
 > spec.md §5 Historia 5. Variables de entorno, validación LIVE, pre-flight check.
@@ -209,7 +211,126 @@ last_updated: 2026-06-07
 
 ---
 
-## ⛔ Bloqueos
+## ✅ H6 — NovaQuant ML Pipeline
+
+> Modelo LSTM propio (NovaQuant) para predicción de señales de trading. Pipeline completo: fetching OHLCV → preprocesamiento (TA-lib indicators) → feature selection (Pearson correlation) → training (Keras LSTM) → inference → checkpoint persistence.
+
+**Domain VOs**: `ModelConfig` (lookback, features, layers, dropout, target thresholds), `TradingSignal` (BUY/SELL/HOLD con confidence), `SignalSide` enum.
+
+**Domain Entity**: `NovaQuantModel` — weights hash, version, feature means/stds, metrics, trained_at, age_days, is_stale, validate_input, assert_not_stale, assert_version.
+
+**Ports**: `OhlcvSource` (fetch historical), `DataPreprocessor` (build_features, normalize, create_windows, create_targets), `FeatureAnalyzer` (compute_correlations, filter_features), `ModelTrainer` (train, save), `ModelPredictor` (load, predict), `CheckpointRepository` (save/load model state).
+
+**Use Cases**: `TrainModelUseCase` — fetch OHLCV → preprocess → analyze → train → save checkpoint. `PredictSignalUseCase` — fetch OHLCV → preprocess → load checkpoint → predict → return `TradingSignal`.
+
+**Infrastructure**: `TaDataPreprocessor` (RSI, MACD, BB, EMA, ATR features via `ta`), `CorrelationFeatureAnalyzer` (Pearson r, filter noise features, keep min 3), `NovaQuantKerasModel` (train/predict via tf.keras, 3 hidden layers, dropout, checkpoint save/load), `FsCheckpointRepository` (JSON + .keras on filesystem).
+
+**API**: `POST /model/train` — body: `{symbol, timeframe, lookback, features, layers, epochs}` → response: `{status, version, metrics, feature_count, checkpoint_path}`. `POST /model/predict` — body: `{symbol, timeframe}` → response: `{signal, side, confidence, version}`. Returns 422 on errors.
+
+- [x] H6-001 — Domain VOs: ModelConfig (validación: lookback 5-500, features no vacío, target_lookahead ≥ 1, confidence threshold 0.5-0.99, capa depth 1-10, dropout 0-0.5), TradingSignal (confidence 0-1, actionable threshold), SignalSide (BUY/SELL/HOLD)
+- [x] H6-002 — Domain entity: NovaQuantModel con weights_hash, version, feature_stats, metrics, trained_at, age_days, is_stale (≥7d), validate_input/assert_not_stale/assert_version
+- [x] H6-003 — Application ports: OhlcvSource, DataPreprocessor (build_features, normalize, create_windows 2D/3D, create_targets one-hot), FeatureAnalyzer (pearson correlation matrix, filter by threshold, min 3 features), ModelTrainer (train, save), ModelPredictor (load, predict), CheckpointRepository (save/load/list)
+- [x] H6-004 — Application use cases: TrainModelUseCase (fetch → preprocess → analyze → train → save → return metrics), PredictSignalUseCase (fetch → preprocess → load → predict → build TradingSignal)
+- [x] H6-005 — Infrastructure: TaDataPreprocessor (TA-lib: RSI-14, MACD, BB, EMA-20, ATR; normalize z-score; sliding windows; one-hot targets), CorrelationFeatureAnalyzer (pearsonr scipy, filter |r| < 0.1, keep ≥ 3), NovaQuantKerasModel (3 dense layers: 128→64→32, dropout 0.3, Adam, early stopping, checkpoint .keras), FsCheckpointRepository (JSON metadata + .keras file)
+- [x] H6-006 — API: POST /model/train (Pydantic schema, 422 sad paths), POST /model/predict (Pydantic schema, 422 sad paths)
+- [x] H6-007 — Composition wiring: get_model_use_cases() lazy builder, _CcxtOhlcvAdapter (exchange) / _FakeOhlcvSource (backtesting), cached in app.state
+- [x] H6-008 — Tests: 83 new (20 unit VOs + 20 unit entity + 18 integration data_preprocessor + 12 integration feature_analyzer + 13 API integration). 200/201 total pass (1 skipped — subscriber requires broker)
+- [x] H6-009 — Validation: pytest 200/201, arch_lint PASS, secret_scan clean, merge conflicts with dev (H4-B + H5) resolved
+
+**Progreso**: 9/9 = **100%**
+**Dependencias**: H2 (OHLCV source pattern), H4-A (order placement for future signal execution)
+**Notas**:
+- NovaQuant no está en spec.md original — es una historia solicitada por el usuario post-H5.
+- El modelo Keras tiene 3 capas ocultas (128→64→32) con dropout 0.3 y early stopping (patience 5).
+- Backtesting usa _FakeOhlcvSource que retorna lista vacía; PAPER/LIVE usa _CcxtOhlcvAdapter.
+- Checkpoints se persisten en `checkpoints/` como .keras + .json metadata.
+- Feature engineering incluye RSI-14, MACD (12/26/9), BB (20,2), EMA-20, ATR-14.
+
+---
+
+## ✅ H7 — Live Execution Engine
+
+> Orquestador que cierra el bucle señal→orden→posición→P&L en tiempo real, conectando NovaQuant (H6), risk (H2/H3), y order placement (H4-A) en producción o paper trading.
+
+**Pipeline**: `TradingSignal` → SignalValidator (confidence + cooldown) → CircuitBreakerCheck → PositionSizer → PlaceOrderUseCase → PositionTracker (SL/TP loop) → ExecutionLogger.
+
+- [x] H7-001 — Domain VOs: `ExecutionSignal` (side, confidence, symbol, strategy_id, timestamp — rejects HOLD, validates confidence/symbol), `LivePosition` (side, units, entry, sl/tp hit detection, PnL%, compute_pnl_at), `ExecutionReport` (signal_id, order_id, status, filled_qty, avg_price, pnl, errors[] — status validation)
+- [x] H7-002 — Domain entity: `SignalValidator` (confidence threshold, cooldown per symbol, dedup by signal_id, expiration), `PositionTracker` (stateless SL/TP checker, TrackResult verdict + PnL)
+- [x] H7-003 — Ports: `SignalConsumer` (async streaming protocol), `PositionRepository` (CRUD), `ExecutionLogger` (structured logging)
+- [x] H7-004 — Use case: `ExecuteSignalUseCase` (validate → CB check → balance+ATR → position sizing → order placement → persist → log), `MonitorPositionsUseCase` (periodic SL/TP loop, auto-close on hit)
+- [x] H7-005 — Infrastructure: `NovaQuantSignalConsumer` (adapts TradingSignal → ExecutionSignal), `InMemoryPositionRepository` + `FilePositionRepository` (JSON persistence, auto-creates dir)
+- [x] H7-006 — Infrastructure: `StructlogExecutionLogger` (structured JSON logs per execution event)
+- [x] H7-007 — Integration wiring: `composition.py` with `get_execute_signal_usecase`, `get_monitor_positions_usecase`, `get_position_repo` (all cached in app.state)
+- [x] H7-008 — API: `POST /execute/signal` (trigger signal manually), `GET /position/list` (open/all), `GET /execution/log` (recent executions) — 422 on rejection/error
+- [x] H7-009 — Tests: 59 new (21 unit VOs + 8 SignalValidator + 8 PositionTracker + 5 execute_signal + 5 monitor_positions + 7 integration endpoint + 5 integration list/log). 323/324 total pass (1 skipped).
+
+**Progreso**: 9/9 = **100%**
+**Dependencias**: H2 (position sizing), H3 (circuit breaker check), H4-A (order placement), H6 (NovaQuant signals), H8 (strategy patterns)
+**Notas**:
+- H7 no introduce un nuevo exchange adapter; reusa CCXT de H4-A.
+- ExecuteSignalUseCase requiere signal.price — fallback a ATR como entry price rechazado (error).
+- SL = max(ATR * 1.5, entry * 0.005), clamped para evitar precios negativos/invertidos.
+- SignalValidator defaults: min_confidence=0.7, cooldown=60s, max_age=300s.
+- BACKTESTING mode usa `_FakeAtrCalculator` (ATR fijo=500), `MockBalanceProvider` (10k), `_NoopOrderClient`.
+
+---
+
+## ✅ H8 — Backtesting Engine
+
+> Framework de backtesting para validar estrategias contra datos históricos. Estrategias clásicas (EMA crossover, RSI mean reversion) + framework extensible para NovaQuant.
+
+**Engine**: `BacktestEngine` entidad de dominio que procesa velas secuencialmente, genera señales vía callable, simula posiciones con SL dinámico basado en ATR, calcula PnL y produce curva de equity.
+
+**Estrategias**: `EmaCrossStrategy` (trend following, EMA rápida 9 / lenta 21, crossover → BUY/SELL), `RsiMeanReversionStrategy` (mean reversion, RSI-14, oversold < 30 > overbought 70, bounce → BUY/SELL). Registro extensible via `StrategyDictRegistry`.
+
+**Métricas**: `SimpleMetricsCalculator` — Sharpe ratio anualizado (RF=0), max drawdown pico-a-valle, win rate, profit factor, volatilidad, PnL promedio.
+
+**Reportes**: `FileBacktestReporter` — JSON en `reports/backtest/<strategy>_<symbol>_<timestamp>.json` con config, métricas, trades, y equity curve.
+
+- [x] H8-001 — Domain VOs: BacktestConfig (strategy_id, symbol, timeframe, initial_balance, risk_pct 0-2%, max_trades), BacktestTrade (side, entry/exit, units, pnl), BacktestMetrics (sharpe, max_dd, win_rate, total_return, profit_factor)
+- [x] H8-002 — Domain entity: BacktestEngine (sequential candle loop, SignalFn callable, entry/exit simulation, ATR-based SL, equity curve, max_trades cap)
+- [x] H8-003 — Ports: Strategy protocol (build -> SignalFn), BacktestReporter (save report), MetricsCalculator (compute from trades + equity)
+- [x] H8-004 — Use case: RunBacktestUseCase (resolve strategy -> fetch OHLCV -> run engine -> calc metrics -> save report -> return result)
+- [x] H8-005 — Infrastructure strategies: EmaCrossStrategy (9/21 EMA crossover, confidence basado en distancia), RsiMeanReversionStrategy (14-period RSI, oversold 30/overbought 70, bounce detection), StrategyDictRegistry (con defaults + register)
+- [x] H8-006 — Infrastructure metrics + reporter: SimpleMetricsCalculator (Sharpe anualizado sqrt(365), max drawdown, win rate, profit factor, vol), FileBacktestReporter (JSON con trades + equity curve)
+- [x] H8-007 — API: POST /backtest/run (config params, 422 sad paths), GET /backtest/strategies (lista IDs disponibles)
+- [x] H8-008 — Tests: 64 nuevos (21 unit VOs + 8 unit engine + 14 unit strategies + 10 unit metrics + 7 integration endpoint). 264/265 total pass (1 skipped)
+- [x] H8-009 — Validation: pytest 264/265, arch_lint PASS, secret_scan clean, 1 commit conventional
+
+**Progreso**: 9/9 = **100%**
+**Dependencias**: H6 (NovaQuant como estrategia futura), H2 (position sizing pattern)
+**Notas**:
+- BacktestEngine es agnóstico de estrategia — recibe un callable `SignalFn: (idx, ohlcv, config) -> (side, confidence) | None`.
+- SL distance = max(ATR_14 * 1.5, entry_price * 0.005).
+- Position sizing = (balance * risk_pct) / 0.01 / entry_price.
+- BACKTESTING mode usa `_FakeOhlcvSource` (sin datos reales). Para backtest real se necesita PAPER_TRADING con exchange conectado o un OhlcvSource CSV.
+- `SimpleMetricsCalculator._compute_sharpe` asume returns diarios y anualiza con sqrt(365). Para otras temporalidades es aproximado.
+
+---
+
+## ✅ H9 — Telemetry Webhooks (Telegram/Discord)
+
+> Adaptadores ligeros para notificaciones vía webhooks Telegram/Discord. Analytics-engine publica eventos a Redis stream `notifications:events`; Data-engine (Node/NestJS) consume y dispara HTTP.
+
+**Arquitectura**: `ExecuteSignalUseCase` → `NotifyOnEventUseCase` → `RedisNotifier` → XADD a `notifications:events` → `NotificationConsumer` (NestJS XREAD) → Telegram/Discord HTTP POST
+
+- [x] H9-001 — Domain VOs: `NotificationEvent` (frozen dataclass con event_type, severity, title, message, symbol, metadata, timestamp), `NotificationSeverity` (INFO/WARN/CRITICAL), `NotificationEventType` (7 tipos)
+- [x] H9-002 — Ports: `Notifier` protocol (async send)
+- [x] H9-003 — Use case: `NotifyOnEventUseCase` (dispara notifier con evento)
+- [x] H9-004 — Infra Python: `LoggingNotifier` (structlog), `RedisNotifier` (XADD a `notifications:events`), `CompositeNotifier` (fan-out)
+- [x] H9-005 — Composition Python: wiring en `build_composition()`, modo BACKTESTING usa solo LoggingNotifier, PAPER/LIVE añade RedisNotifier
+- [x] H9-006 — Infra Node: `TelegramNotifier` (fetch POST a Bot API), `DiscordNotifier` (fetch POST a webhook), `NotificationConsumer` (NestJS OnModuleInit/OnModuleDestroy, XREAD loop)
+- [x] H9-007 — API: `POST /notification/test`, `GET /notification/status`
+- [x] H9-008 — Env vars: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `DISCORD_WEBHOOK_URL` documentados en `.env.example` de ambos engines
+- [x] H9-009 — Tests: 14 nuevos (6 VOs + 5 unit infra + 1 use case + 2 integration). 337/338 total pass (1 skipped). TypeScript typecheck PASS.
+
+**Progreso**: 9/9 = **100%**
+**Dependencias**: H7 (execute_signal, monitor_positions), H3 (circuit breaker), H4-B (incident reporting)
+**Notas**:
+- El dispatch HTTP corre en Node (data-engine), no en Python. Python solo publica a Redis.
+- `fetch()` global de Node 18+ usado para webhooks — sin dependencias nuevas.
+- Si ninguna token/webhook env var está configurada, notificaciones son no-op (solo log).
+- BACKTESTING mode no publica a Redis (solo LoggingNotifier).
 
 _Ninguno actualmente._
 
@@ -285,6 +406,74 @@ _Ninguno actualmente._
 - ✅ PR body archivado en `docs/prs/done/h1-tick-pipeline.md` para referencia histórica.
 - 🎯 **PR #1 (H1) mergeado a dev** — primera historia cerrada del proyecto.
 - 🔒 Sandbox: registry npm ~14s/ping, install tomó ~5 min; tests/lint corren offline en ~5s cada uno.
+
+### 2026-06-08 — Sesión H8: Backtesting Engine
+- ✅ Branch `feature/h8-backtest-engine` creada desde `dev` (post-merge H6).
+- ✅ Domain: BacktestConfig, BacktestTrade, BacktestMetrics VOs + BacktestEngine entity con SignalFn, ATR SL, equity curve.
+- ✅ Ports: Strategy (protocol + SignalFn), BacktestReporter, MetricsCalculator.
+- ✅ Use Case: RunBacktestUseCase (pipeline completo con validaciones).
+- ✅ Estrategias: EmaCrossStrategy (9/21 EMA crossover), RsiMeanReversionStrategy (RSI-14, 30/70 thresholds), StrategyDictRegistry.
+- ✅ Métricas: SimpleMetricsCalculator — Sharpe anualizado, max drawdown, win rate, profit factor.
+- ✅ Reporter: FileBacktestReporter — JSON en reports/backtest/.
+- ✅ API: POST /backtest/run + GET /backtest/strategies (vía app.state, no singletons module-level).
+- ✅ Tests: 64 nuevos (21 VOs + 8 engine + 14 strategies + 10 metrics + 7 integration). 264/265 total.
+- 🐛 Bug fix: Decimal * float en ATR cálculo del engine (atr * 1.5 → atr * Decimal("1.5")). DivisionByZero en precios negativos (safety check entry_price > 0).
+- 🐛 Bug fix: singleton module-level en get_backtest_usecase() causaba tests no deterministas. Refactor a app.state como los otros use cases.
+- ✅ Validación: pytest 264/265, arch_lint PASS, secret_scan clean.
+
+### 2026-06-09 — Sesión H9: Telemetry Webhooks (merge a dev)
+- ✅ PR mergeado a `dev` por el usuario.
+- ✅ Rama `feature/h6-telemetry-webhooks` borrada (local + origin).
+- **Estado**: 9/9 tareas, 94/94 totales completadas.
+- **Próximo**: definir próximas historias o release.
+
+### 2026-06-09 — Sesión H9: Telemetry Webhooks (Telegram/Discord)
+- ✅ Branch `feature/h9-telemetry-webhooks` creada desde `dev`.
+- ✅ Domain VO: NotificationEvent, NotificationSeverity, NotificationEventType.
+- ✅ Port: Notifier protocol (Python), implementado en LoggingNotifier + RedisNotifier + CompositeNotifier.
+- ✅ Use case: NotifyOnEventUseCase — dispara notifier con evento.
+- ✅ API: POST /notification/test, GET /notification/status.
+- ✅ Composition: wiring con RedisNotifier en PAPER/LIVE, LoggingNotifier en BACKTESTING.
+- ✅ Node/NestJS: TelegramNotifier, DiscordNotifier, NotificationConsumer (XREAD + HTTP POST via fetch).
+- ✅ Env vars: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, DISCORD_WEBHOOK_URL en .env.example de ambos engines.
+- ✅ Tests: 14 nuevos (Python). 337/338 total pass. TypeScript typecheck PASS. arch_lint PASS. secret_scan clean.
+- 🐛 Bug fix: RedisNotifier test assertion usaba index wrong (call[0] vs call.args). Corregido.
+- 🎯 Branch local lista para push + PR.
+
+### 2026-06-08 — Sesión H7: Live Execution Engine (merge a dev)
+- ✅ PR #7 mergeado a `dev` por el usuario.
+- ✅ Rama `feature/h7-live-execution-engine` borrada (local + origin).
+- **Estado**: 9/9 tareas, 85/85 total, 323 tests, arch_lint PASS, secret_scan clean.
+- **Próximo**: H7 está en `dev`. Listo para release cuando se definan las próximas historias.
+
+### 2026-06-08 — Sesión H7: Live Execution Engine
+- ✅ Branch `feature/h7-live-execution-engine` creada desde `dev` (post-merge H8).
+- ✅ H7-001: Domain VOs — ExecutionSignal (rejects HOLD, validates confidence/symbol), LivePosition (SL/TP hit, PnL%, compute_pnl_at), ExecutionReport (status validation).
+- ✅ H7-002: Domain entities — SignalValidator (confidence threshold, cooldown, dedup, expiration), PositionTracker (stateless SL/TP verdict + PnL).
+- ✅ H7-003: Ports — SignalConsumer (async generator protocol), PositionRepository (CRUD), ExecutionLogger (structured).
+- ✅ H7-004: Use cases — ExecuteSignalUseCase (validate → CB → size → place → persist → log), MonitorPositionsUseCase (SL/TP loop → auto-close).
+- ✅ H7-005/006: Infrastructure — NovaQuantSignalConsumer, InMemoryPositionRepository, FilePositionRepository (JSON), StructlogExecutionLogger.
+- ✅ H7-007: Composition wiring — 3 use case builders cached in app.state, BACKTESTING mode uses _FakeAtrCalculator/MockBalanceProvider/_NoopOrderClient.
+- ✅ H7-008: API — POST /execute/signal, GET /position/list, GET /execution/log (422 on error/rejection).
+- ✅ H7-009: Tests — 59 new (21 VOs + 8 SignalValidator + 8 PositionTracker + 5 execute_signal + 5 monitor_positions + 12 integration). 323/324 total pass (1 skipped).
+- 🐛 Bug fix: TaAtrCalculator no tenía `calculate()`, usa `get_atr()` que retorna `Atr` VO (no Decimal).
+- 🐛 Bug fix: ATR import faltante en composition.py (line 614 referenced `AtrCalculator` sin import). Añadido.
+- 🐛 Bug fix: Integration test cooldown collision entre `test_execute_buy` y `test_with_price` (mismo símbolo BTC/USDT). Cambiado a SOL/USDT.
+- ✅ Validación: pytest 323/324, arch_lint PASS, secret_scan clean.
+
+### 2026-06-08 — Sesión H6: NovaQuant ML Pipeline
+- ✅ NovaQuant completo: 9/9 tareas, 30 archivos nuevos.
+- ✅ Domain VOs: ModelConfig (lookback 5-500, features, layers 1-10, dropout 0-0.5, target thresholds), TradingSignal (confidence 0-1, actionable, metadata), SignalSide (BUY/SELL/HOLD).
+- ✅ Domain entity: NovaQuantModel con weights_hash, version, feature_stats, metrics, trained_at, age_days, is_stale (≥7d), validate_input/assert_not_stale/assert_version, __repr__.
+- ✅ 6 ports: OhlcvSource, DataPreprocessor (build_features con RSI/MACD/BB/EMA/ATR, z-score normalize, sliding windows 2D/3D, one-hot targets), FeatureAnalyzer (Pearson r, filter noise, keep ≥3), ModelTrainer, ModelPredictor, CheckpointRepository.
+- ✅ 2 use cases: TrainModelUseCase (fetch → preprocess → analyze → train → save), PredictSignalUseCase (fetch → preprocess → load → predict → TradingSignal).
+- ✅ 4 infra adapters: TaDataPreprocessor (ta library), CorrelationFeatureAnalyzer (scipy.stats.pearsonr), NovaQuantKerasModel (3 dense: 128→64→32, dropout 0.3, Adam, early stopping patience 5, .keras checkpoint), FsCheckpointRepository (JSON metadata + .keras).
+- ✅ API: POST /model/train, POST /model/predict con Pydantic schemas y 422 sad paths.
+- ✅ Composition: get_model_use_cases() lazy builder, _CcxtOhlcvAdapter / _FakeOhlcvSource, cached en app.state.
+- ✅ Tests: 83 nuevos (20 unit VOs + 20 unit entity + 18 integration data_preprocessor + 12 integration feature_analyzer + 13 API). 200/201 total (1 skipped — subscriber).
+- ✅ Merge dev → feature/h6-novaquant: 5 conflictos resueltos (api/__init__, ports/__init__, use_cases/__init__, composition.py, main.py). H4-B + H5 integrados.
+- ✅ Validación: pytest 200/201, arch_lint PASS, secret_scan clean.
+- ✅ 1 commit conventional, branch local lista para push + PR.
 
 ### 2026-06-06 — Sesión de setup
 - ✅ Crash de opencode diagnosticado y resuelto (3 causas: `import.meta.dir`, regex `(?i)`, `execute()` sync).

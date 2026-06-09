@@ -2,22 +2,64 @@
 
 Each port abstracts an I/O concern that the use cases need but must
 not couple to. The infrastructure layer provides the concrete
-adapters (CCXT, TA, broker).
+adapters (CCXT, TA, broker, Keras).
 """
-from .balance_provider import BalanceProvider, BalanceProviderError
 from .atr_calculator import AtrCalculator, AtrCalculatorError
-from .min_lot_provider import MinLotProvider, MinLotProviderError, MarketConstraints
+from .backtest_reporter import BacktestReporter, MetricsCalculator
+from .balance_provider import BalanceProvider, BalanceProviderError
+from .checkpoint_repository import (
+    CheckpointIOError,
+    CheckpointNotFoundError,
+    CheckpointRepository,
+)
+from .data_preprocessor import (
+    DataPreprocessor,
+    InsufficientDataError,
+    PreprocessingError,
+)
+from .execution_logger import ExecutionLogger
+from .feature_analyzer import AnalysisError, FeatureAnalyzer
 from .incident_reporter import IncidentReporter
+from .notifier import Notifier
 from .incident_repository import IncidentRepository
+from .min_lot_provider import MarketConstraints, MinLotProvider, MinLotProviderError
+from .model_predictor import ModelPredictor, PredictionError
+from .model_trainer import ModelTrainer, TrainingError
+from .ohlcv_source import OhlcvSource, OhlcvSourceError
+from .position_repository import PositionRepository
+from .signal_consumer import SignalConsumer
+from .strategy import Strategy, StrategyRegistry
 
 __all__ = [
-    "BalanceProvider",
-    "BalanceProviderError",
+    "AnalysisError",
     "AtrCalculator",
     "AtrCalculatorError",
+    "BacktestReporter",
+    "BalanceProvider",
+    "BalanceProviderError",
+    "CheckpointIOError",
+    "CheckpointNotFoundError",
+    "CheckpointRepository",
+    "DataPreprocessor",
+    "ExecutionLogger",
+    "FeatureAnalyzer",
+    "IncidentReporter",
+    "Notifier",
+    "IncidentRepository",
+    "InsufficientDataError",
+    "MarketConstraints",
+    "MetricsCalculator",
     "MinLotProvider",
     "MinLotProviderError",
-    "MarketConstraints",
-    "IncidentReporter",
-    "IncidentRepository",
+    "ModelPredictor",
+    "ModelTrainer",
+    "OhlcvSource",
+    "OhlcvSourceError",
+    "PositionRepository",
+    "PredictionError",
+    "PreprocessingError",
+    "SignalConsumer",
+    "Strategy",
+    "StrategyRegistry",
+    "TrainingError",
 ]

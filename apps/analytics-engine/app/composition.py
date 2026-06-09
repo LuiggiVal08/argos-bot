@@ -28,6 +28,7 @@ from .application.ports.min_lot_provider import (
     MarketConstraints,
     MinLotProvider,
 )
+from .application.ports.ohlcv_source import OhlcvSource
 from .application.ports.trade_journal import (
     TradeJournal,
 )
@@ -40,28 +41,45 @@ from .application.ports.environment_mode_writer import (
 from .application.ports.drawdown_snapshot_repo import (
     DrawdownSnapshotRepo,
 )
+from .application.ports.atr_calculator import AtrCalculator
+from .application.ports.backtest_reporter import BacktestReporter, MetricsCalculator
+from .application.ports.execution_logger import ExecutionLogger
 from .application.ports.incident_reporter import IncidentReporter
+from .application.ports.notifier import Notifier
 from .application.ports.incident_repository import IncidentRepository
+from .application.ports.position_repository import PositionRepository
 from .application.use_cases.check_drawdown import CheckDrawdownUseCase
 from .application.use_cases.compute_position_size import (
     ComputePositionSizeUseCase,
 )
+from .application.use_cases.execute_signal import ExecuteSignalUseCase
 from .application.use_cases.list_incidents import ListIncidentsUseCase
+from .application.use_cases.monitor_positions import MonitorPositionsUseCase
+from .application.use_cases.notify_on_event import NotifyOnEventUseCase
 from .application.use_cases.open_day import OpenDayUseCase
 from .application.use_cases.place_order import PlaceOrderUseCase
+from .application.use_cases.predict_signal import PredictSignalUseCase
 from .application.use_cases.report_incident import ReportIncidentUseCase
+from .application.use_cases.run_backtest import RunBacktestUseCase
+from .application.use_cases.train_model import TrainModelUseCase
 from .application.use_cases.trip_circuit_breaker import (
     TripCircuitBreakerUseCase,
 )
 from .domain.entities.circuit_breaker import CircuitBreaker
 from .domain.entities.risk_calculator import RiskCalculator
+from .domain.entities.signal_validator import SignalValidator
 from .infrastructure.balance.ccxt_balance_provider import CcxtBalanceProvider
 from .infrastructure.balance.mock_balance_provider import MockBalanceProvider
 from .infrastructure.env_mode.file_env_mode_writer import (
     FileEnvironmentModeWriter,
 )
 from .infrastructure.exchange.ccxt_order_client import CcxtOrderClient
+from .domain.value_objects.atr import Atr
 from .infrastructure.indicators.ta_atr_calculator import TaAtrCalculator
+from .infrastructure.backtest.file_reporter import FileBacktestReporter
+from .infrastructure.backtest.metrics_calculator import SimpleMetricsCalculator
+from .infrastructure.execution.in_memory_position_repo import InMemoryPositionRepository
+from .infrastructure.execution.structlog_execution_logger import StructlogExecutionLogger
 from .infrastructure.journal.in_memory_snapshot_repo import InMemorySnapshotRepo
 from .infrastructure.journal.in_memory_trade_journal import InMemoryTradeJournal
 from .infrastructure.market.ccxt_min_lot_provider import CcxtMinLotProvider
@@ -71,7 +89,12 @@ from .infrastructure.monitoring.in_memory_incident_repo import (
 from .infrastructure.monitoring.logging_incident_reporter import (
     LoggingIncidentReporter,
 )
+from .infrastructure.notification.composite_notifier import (
+    CompositeNotifier,
+)
+from .infrastructure.notification.logging_notifier import LoggingNotifier
 from .infrastructure.ohlcv.ccxt_ohlcv_source import ccxt_ohlcv_source
+from .infrastructure.strategies.registry import StrategyDictRegistry
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -99,6 +122,8 @@ class Composition:
     circuit_breaker: CircuitBreaker
     exchange: ccxt.Exchange | None
     mode: str
+    notifier: Notifier
+    notify_on_event: NotifyOnEventUseCase
 
 
 def _env_mode() -> str:
@@ -317,6 +342,17 @@ def build_composition() -> Composition:
     )
     list_incidents_uc = ListIncidentsUseCase(repo=incident_repo)
 
+    # H6 wiring — Notifications (publish events to Redis stream)
+    if mode == "BACKTESTING":
+        notifier: Notifier = LoggingNotifier()
+    else:
+        from .infrastructure.notification.redis_notifier import RedisNotifier
+        channels: list[Notifier] = [LoggingNotifier()]
+        redis_url = os.environ.get("ARGOS_BROKER_URL", "redis://localhost:6379")
+        channels.append(RedisNotifier(redis_url=redis_url))
+        notifier = CompositeNotifier(channels)
+    notify_on_event_uc = NotifyOnEventUseCase(notifier=notifier)
+
     return Composition(
         compute_position_size=compute_position_size,
         check_drawdown=check,
@@ -333,6 +369,8 @@ def build_composition() -> Composition:
         circuit_breaker=circuit_breaker,
         exchange=exchange,
         mode=mode,
+        notifier=notifier,
+        notify_on_event=notify_on_event_uc,
     )
 
 
@@ -376,3 +414,243 @@ def get_list_incidents_usecase(
     request: Request,
 ) -> ListIncidentsUseCase:
     return _comp(request).list_incidents
+
+
+def get_notify_on_event_usecase(
+    request: Request,
+) -> NotifyOnEventUseCase:
+    return _comp(request).notify_on_event
+
+
+# H8 — Backtest use cases (cached in app.state) --------------------------------
+
+
+def get_backtest_usecase(request: Request) -> RunBacktestUseCase:
+    """Return the RunBacktestUseCase, cached in app.state."""
+    cached: RunBacktestUseCase | None = getattr(request.app.state, "backtest_usecase", None)
+    if cached is not None:
+        return cached
+
+    comp = _comp(request)
+
+    if comp.mode == "BACKTESTING":
+        ohlcv_source: OhlcvSource = _FakeOhlcvSource()  # type: ignore[arg-type]
+    else:
+        exchange = comp.exchange
+        if exchange is None:
+            raise RuntimeError("exchange is None in non-BACKTESTING mode")
+        ohlcv_source = _CcxtOhlcvAdapter(exchange)
+
+    registry = StrategyDictRegistry()
+    metrics_calc = SimpleMetricsCalculator()
+    reporter: BacktestReporter = FileBacktestReporter()
+
+    use_case = RunBacktestUseCase(
+        ohlcv_source=ohlcv_source,
+        strategy_registry=registry,
+        metrics_calculator=metrics_calc,
+        reporter=reporter,
+    )
+    request.app.state.backtest_usecase = use_case
+    request.app.state.backtest_registry = registry
+    return use_case
+
+
+def get_backtest_registry(request: Request) -> StrategyDictRegistry:
+    """Return the singleton strategy registry."""
+    cached: StrategyDictRegistry | None = getattr(request.app.state, "backtest_registry", None)
+    if cached is not None:
+        return cached
+    get_backtest_usecase(request)
+    cached = getattr(request.app.state, "backtest_registry", None)
+    assert cached is not None
+    return cached
+
+
+# H6 — NovaQuant model use cases (built on demand, cached in app.state) -------
+
+@dataclass
+class _ModelUseCases:
+    train: TrainModelUseCase
+    predict: PredictSignalUseCase
+
+
+def get_model_use_cases(request: Request) -> _ModelUseCases:
+    """Return the NovaQuant model use cases.
+
+    Built once and cached in `app.state.model_use_cases`. Requires
+    TensorFlow for the Keras adapter.
+    """
+    cached: _ModelUseCases | None = getattr(request.app.state, "model_use_cases", None)
+    if cached is not None:
+        return cached
+
+    comp = _comp(request)
+
+    # OHLCV source for training — uses the same exchange as the rest
+    if comp.mode == "BACKTESTING":
+        ohlcv_source: Any = _FakeOhlcvSource()
+    else:
+        exchange = comp.exchange
+        if exchange is None:
+            raise RuntimeError("exchange is None in non-BACKTESTING mode")
+        ohlcv_source = _CcxtOhlcvAdapter(exchange)
+
+    # NovaQuant adapters
+    from .infrastructure.training.data_preprocessor import TaDataPreprocessor
+    from .infrastructure.training.feature_analyzer_impl import CorrelationFeatureAnalyzer
+    from .infrastructure.models.nova_quant_keras import NovaQuantKerasModel
+    from .infrastructure.models.checkpoint_repo_fs import FsCheckpointRepository
+
+    preprocessor = TaDataPreprocessor()
+    analyzer = CorrelationFeatureAnalyzer()
+    keras_model = NovaQuantKerasModel()
+    repo = FsCheckpointRepository()
+
+    train_uc = TrainModelUseCase(
+        ohlcv_source=ohlcv_source,
+        preprocessor=preprocessor,
+        analyzer=analyzer,
+        trainer=keras_model,
+        repo=repo,
+    )
+    predict_uc = PredictSignalUseCase(
+        ohlcv_source=ohlcv_source,
+        preprocessor=preprocessor,
+        predictor=keras_model,
+        repo=repo,
+    )
+
+    use_cases = _ModelUseCases(train=train_uc, predict=predict_uc)
+    request.app.state.model_use_cases = use_cases
+    return use_cases
+
+
+class _CcxtOhlcvAdapter:
+    """Adapta ccxt_ohlcv_source (funcion que retorna DataFrame) al port OhlcvSource."""
+
+    def __init__(self, exchange: ccxt.Exchange) -> None:
+        self._exchange = exchange
+
+    async def fetch_ohlcv(
+        self,
+        symbol: str,
+        timeframe: str = "1h",
+        limit: int = 1000,
+        since: int | None = None,
+    ) -> list[dict]:
+        df = await ccxt_ohlcv_source(self._exchange, symbol, timeframe, limit)
+        return df.to_dict("records")
+
+
+# H7 — Live Execution Engine (cached in app.state) ----------------------------
+
+
+def get_execute_signal_usecase(request: Request) -> ExecuteSignalUseCase:
+    """Return the ExecuteSignalUseCase, cached in app.state."""
+    cached: ExecuteSignalUseCase | None = getattr(
+        request.app.state, "execute_signal_usecase", None
+    )
+    if cached is not None:
+        return cached
+
+    comp = _comp(request)
+
+    validator = SignalValidator()
+
+    if comp.mode == "BACKTESTING":
+        balance_provider: BalanceProvider = MockBalanceProvider(Decimal("10000"))
+        atr_calc: AtrCalculator = _FakeAtrCalculator()
+    else:
+        balance_provider = CcxtBalanceProvider(exchange=comp.exchange)
+        atr_calc = TaAtrCalculator(
+            source=lambda s, t, w: ccxt_ohlcv_source(comp.exchange, s, t, w)
+        )
+
+    import asyncio
+
+    if comp.mode == "BACKTESTING":
+        exchange_client: ExchangeOrderClient = _NoopOrderClient()
+        async def _not_halted() -> bool:
+            return False
+        drawdown_checker = _not_halted
+    else:
+        exchange_client = CcxtOrderClient(exchange=comp.exchange)
+        async def _check_halted() -> bool:
+            return comp.check_drawdown.is_halted()
+        drawdown_checker = _check_halted
+
+    position_repo = get_position_repo(request)
+    execution_logger = StructlogExecutionLogger()
+
+    use_case = ExecuteSignalUseCase(
+        signal_validator=validator,
+        balance_provider=balance_provider,
+        atr_calculator=atr_calc,
+        exchange_client=exchange_client,
+        position_repo=position_repo,
+        execution_logger=execution_logger,
+        is_halted=drawdown_checker,
+    )
+    request.app.state.execute_signal_usecase = use_case
+    return use_case
+
+
+def get_monitor_positions_usecase(request: Request) -> MonitorPositionsUseCase:
+    """Return the MonitorPositionsUseCase, cached in app.state."""
+    cached: MonitorPositionsUseCase | None = getattr(
+        request.app.state, "monitor_positions_usecase", None
+    )
+    if cached is not None:
+        return cached
+
+    position_repo = get_position_repo(request)
+    execution_logger = StructlogExecutionLogger()
+
+    comp = _comp(request)
+    if comp.mode == "BACKTESTING":
+        exchange_client: ExchangeOrderClient = _NoopOrderClient()
+    else:
+        exchange_client = CcxtOrderClient(exchange=comp.exchange)
+
+    async def _fake_price(symbol: str) -> Decimal:
+        return Decimal("0")
+
+    use_case = MonitorPositionsUseCase(
+        position_repo=position_repo,
+        exchange_client=exchange_client,
+        execution_logger=execution_logger,
+        price_provider=_fake_price,
+    )
+    request.app.state.monitor_positions_usecase = use_case
+    return use_case
+
+
+def get_position_repo(request: Request) -> PositionRepository:
+    """Return the PositionRepository, cached in app.state."""
+    cached: PositionRepository | None = getattr(
+        request.app.state, "position_repo", None
+    )
+    if cached is not None:
+        return cached
+
+    repo = InMemoryPositionRepository()
+    request.app.state.position_repo = repo
+    return repo
+
+
+class _FakeAtrCalculator(AtrCalculator):
+    """Fixed ATR for BACKTESTING mode."""
+    async def get_atr(
+        self, symbol: str, timeframe: str = "1m", window: int = 14
+    ) -> Atr:
+        return Atr(500)
+
+
+class _FakeOhlcvSource:
+    """OHLCV source for BACKTESTING: returns empty list."""
+
+    async def fetch_ohlcv(
+        self, symbol: str, timeframe: str = "1h", limit: int = 1000, since: int | None = None
+    ) -> list[dict]:
+        return []

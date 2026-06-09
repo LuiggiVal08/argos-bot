@@ -4,10 +4,29 @@ from .check_drawdown import (
     CheckDrawdownError,
     CheckDrawdownResult,
 )
+from .execute_signal import ExecuteSignalUseCase, ExecuteSignalError, ExecuteSignalResult
 from .list_incidents import ListIncidentsUseCase
+from .monitor_positions import MonitorPositionsUseCase, MonitorPositionsError, MonitorResult
+from .notify_on_event import NotifyOnEventUseCase
 from .open_day import OpenDayUseCase, OpenDayError
 from .place_order import PlaceOrderUseCase, PlaceOrderError, PlaceOrderResult
+from .predict_signal import (
+    ConfirmIndicatorsResult,
+    PredictSignalError,
+    PredictSignalResult,
+    PredictSignalUseCase,
+)
 from .report_incident import ReportIncidentUseCase
+from .run_backtest import (
+    RunBacktestError,
+    RunBacktestResult,
+    RunBacktestUseCase,
+)
+from .train_model import (
+    TrainModelError,
+    TrainModelResult,
+    TrainModelUseCase,
+)
 from .trip_circuit_breaker import (
     TripCircuitBreakerUseCase,
     TripCircuitBreakerError,
@@ -18,13 +37,30 @@ __all__ = [
     "CheckDrawdownUseCase",
     "CheckDrawdownError",
     "CheckDrawdownResult",
+    "ConfirmIndicatorsResult",
+    "ExecuteSignalError",
+    "ExecuteSignalResult",
+    "ExecuteSignalUseCase",
     "ListIncidentsUseCase",
+    "MonitorPositionsError",
+    "MonitorPositionsUseCase",
+    "MonitorResult",
+    "NotifyOnEventUseCase",
     "OpenDayUseCase",
     "OpenDayError",
     "PlaceOrderUseCase",
     "PlaceOrderError",
     "PlaceOrderResult",
+    "PredictSignalError",
+    "PredictSignalResult",
+    "PredictSignalUseCase",
     "ReportIncidentUseCase",
+    "RunBacktestError",
+    "RunBacktestResult",
+    "RunBacktestUseCase",
+    "TrainModelError",
+    "TrainModelResult",
+    "TrainModelUseCase",
     "TripCircuitBreakerUseCase",
     "TripCircuitBreakerError",
     "TripResult",
