@@ -421,6 +421,12 @@ _Ninguno actualmente._
 - 🐛 Bug fix: singleton module-level en get_backtest_usecase() causaba tests no deterministas. Refactor a app.state como los otros use cases.
 - ✅ Validación: pytest 264/265, arch_lint PASS, secret_scan clean.
 
+### 2026-06-09 — Sesión H9: Telemetry Webhooks (merge a dev)
+- ✅ PR mergeado a `dev` por el usuario.
+- ✅ Rama `feature/h6-telemetry-webhooks` borrada (local + origin).
+- **Estado**: 9/9 tareas, 94/94 totales completadas.
+- **Próximo**: definir próximas historias o release.
+
 ### 2026-06-09 — Sesión H9: Telemetry Webhooks (Telegram/Discord)
 - ✅ Branch `feature/h9-telemetry-webhooks` creada desde `dev`.
 - ✅ Domain VO: NotificationEvent, NotificationSeverity, NotificationEventType.
