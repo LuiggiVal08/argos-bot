@@ -32,7 +32,9 @@ INDICATOR_COLUMNS = [
     "bb_upper",
     "bb_middle",
     "bb_lower",
+    "bb_width",
     "atr_14",
+    "adx_14",
     "obv",
     "volume_sma_20",
     "price_change_pct",
@@ -111,6 +113,44 @@ def _compute_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
     return obv
 
 
+def _compute_adx(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 14,
+) -> pd.Series:
+    """Average Directional Index."""
+    prev_close = close.shift(1)
+    prev_high = high.shift(1)
+    prev_low = low.shift(1)
+
+    up_move = high - prev_high
+    down_move = prev_low - low
+
+    plus_dm = pd.Series(0.0, index=high.index)
+    minus_dm = pd.Series(0.0, index=high.index)
+
+    plus_dm[(up_move > down_move) & (up_move > 0)] = up_move
+    minus_dm[(down_move > up_move) & (down_move > 0)] = down_move
+
+    tr1 = high - low
+    tr2 = (high - prev_close).abs()
+    tr3 = (low - prev_close).abs()
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+
+    atr = tr.ewm(alpha=1 / period, min_periods=period).mean()
+    plus_di = 100 * (
+        plus_dm.ewm(alpha=1 / period, min_periods=period).mean() / atr.replace(0, pd.NA)
+    )
+    minus_di = 100 * (
+        minus_dm.ewm(alpha=1 / period, min_periods=period).mean() / atr.replace(0, pd.NA)
+    )
+
+    dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, pd.NA)
+    adx = dx.ewm(alpha=1 / period, min_periods=period).mean()
+    return adx
+
+
 def compute_dataset(
     input_path: str | Path,
     output_path: str | Path | None = None,
@@ -175,8 +215,10 @@ def compute_dataset(
     df["bb_upper"] = bb_upper
     df["bb_middle"] = bb_middle
     df["bb_lower"] = bb_lower
+    df["bb_width"] = (bb_upper - bb_lower) / bb_middle.replace(0, pd.NA)
 
     df["atr_14"] = _compute_atr(high, low, close)
+    df["adx_14"] = _compute_adx(high, low, close)
     df["obv"] = _compute_obv(close, volume)
     df["volume_sma_20"] = volume.rolling(window=20, min_periods=20).mean()
     df["price_change_pct"] = close.pct_change() * 100.0

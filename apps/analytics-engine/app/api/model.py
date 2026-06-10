@@ -15,7 +15,7 @@ Sad paths (todas retornan 422 con detalle en texto):
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from ..application.use_cases.predict_signal import (
     PredictSignalError,
@@ -35,6 +35,7 @@ router = APIRouter(prefix="/model", tags=["model"])
     summary="Train a new NovaQuant LSTM model from historical OHLCV.",
 )
 async def train_model(
+    request: Request,
     symbol: str = "BTC/USDT",
     timeframe: str = "1h",
     limit: int = 5000,
@@ -49,9 +50,9 @@ async def train_model(
     Returns:
         Dict con metricas de entrenamiento.
     """
-    use_cases = get_model_use_cases()
+    use_cases = await get_model_use_cases(request)
     try:
-        result = await use_cases["train"].execute(
+        result = await use_cases.train.execute(
             symbol=symbol,
             timeframe=timeframe,
             limit=limit,
@@ -75,6 +76,7 @@ async def train_model(
     summary="Predict trading signal for the current moment.",
 )
 async def predict_signal(
+    request: Request,
     symbol: str = "BTC/USDT",
     timeframe: str = "1h",
     require_confirmation: bool = True,
@@ -89,12 +91,11 @@ async def predict_signal(
     Returns:
         Dict con senal, confianza, y confirmacion.
     """
-    use_cases = get_model_use_cases()
+    use_cases = await get_model_use_cases(request)
     try:
-        result = await use_cases["predict"].execute(
+        result = await use_cases.predict.execute(
             symbol=symbol,
             timeframe=timeframe,
-            require_confirmation=require_confirmation,
         )
     except PredictSignalError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
@@ -120,11 +121,11 @@ async def predict_signal(
     "/info",
     summary="Get current model info (version, metrics, features).",
 )
-async def model_info() -> dict:
+async def model_info(request: Request) -> dict:
     """Retorna informacion del modelo actualmente cargado."""
-    use_cases = get_model_use_cases()
+    use_cases = await get_model_use_cases(request)
     try:
-        model = await use_cases["predict"].load_model()
+        model = await use_cases.predict.load_model()
     except PredictSignalError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
 
@@ -146,6 +147,7 @@ async def model_info() -> dict:
     summary="Analyze feature correlations with the target.",
 )
 async def analyze_features(
+    request: Request,
     symbol: str = "BTC/USDT",
     timeframe: str = "1h",
     limit: int = 1000,
@@ -160,9 +162,9 @@ async def analyze_features(
     Returns:
         Dict con correlaciones y features filtradas.
     """
-    use_cases = get_model_use_cases()
+    use_cases = await get_model_use_cases(request)
     try:
-        result = await use_cases["train"].execute(
+        result = await use_cases.train.execute(
             symbol=symbol,
             timeframe=timeframe,
             limit=limit,

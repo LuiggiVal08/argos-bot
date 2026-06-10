@@ -512,17 +512,24 @@ class _ModelUseCases:
     predict: PredictSignalUseCase
 
 
-def get_model_use_cases(request: Request) -> _ModelUseCases:
+async def get_model_use_cases(request: Request) -> _ModelUseCases:
     """Return the NovaQuant model use cases.
 
-    Built once and cached in `app.state.model_use_cases`. Requires
-    TensorFlow for the Keras adapter.
+    Built once and cached in `app.state.model_use_cases`. Uses either
+    PyTorch (USE_PYTORCH=true) or TensorFlow/Keras (default).
+
+    For PyTorch mode:
+      - Expects model files in models/best_argos_lstm.pt and
+        models/scaler_argos.pkl, OR a checkpoint in the
+        FsCheckpointRepository.
+      - The model is loaded once at first call and cached.
     """
     cached: _ModelUseCases | None = getattr(request.app.state, "model_use_cases", None)
     if cached is not None:
         return cached
 
     comp = _comp(request)
+    use_pytorch = os.environ.get("USE_PYTORCH", "false").lower() == "true"
 
     # OHLCV source for training — uses the same exchange as the rest
     if comp.mode == "BACKTESTING":
@@ -536,31 +543,101 @@ def get_model_use_cases(request: Request) -> _ModelUseCases:
     # NovaQuant adapters
     from .infrastructure.training.data_preprocessor import TaDataPreprocessor
     from .infrastructure.training.feature_analyzer_impl import CorrelationFeatureAnalyzer
-    from .infrastructure.models.nova_quant_keras import NovaQuantKerasModel
     from .infrastructure.models.checkpoint_repo_fs import FsCheckpointRepository
 
     preprocessor = TaDataPreprocessor()
     analyzer = CorrelationFeatureAnalyzer()
-    keras_model = NovaQuantKerasModel()
     repo = FsCheckpointRepository()
 
-    train_uc = TrainModelUseCase(
-        ohlcv_source=ohlcv_source,
-        preprocessor=preprocessor,
-        analyzer=analyzer,
-        trainer=keras_model,
-        repo=repo,
-    )
-    predict_uc = PredictSignalUseCase(
-        ohlcv_source=ohlcv_source,
-        preprocessor=preprocessor,
-        predictor=keras_model,
-        repo=repo,
-    )
+    if use_pytorch:
+        from .infrastructure.models.nova_quant_pytorch import NovaQuantPyTorchModel
+        predictor = NovaQuantPyTorchModel()
+        await _load_pytorch_checkpoint(predictor, repo)
+        train_uc = TrainModelUseCase(
+            ohlcv_source=ohlcv_source,
+            preprocessor=preprocessor,
+            analyzer=analyzer,
+            trainer=predictor,
+            repo=repo,
+        )
+        predict_uc = PredictSignalUseCase(
+            ohlcv_source=ohlcv_source,
+            preprocessor=preprocessor,
+            predictor=predictor,
+            repo=repo,
+        )
+    else:
+        from .infrastructure.models.nova_quant_keras import NovaQuantKerasModel
+        keras_model = NovaQuantKerasModel()
+        train_uc = TrainModelUseCase(
+            ohlcv_source=ohlcv_source,
+            preprocessor=preprocessor,
+            analyzer=analyzer,
+            trainer=keras_model,
+            repo=repo,
+        )
+        predict_uc = PredictSignalUseCase(
+            ohlcv_source=ohlcv_source,
+            preprocessor=preprocessor,
+            predictor=keras_model,
+            repo=repo,
+        )
 
     use_cases = _ModelUseCases(train=train_uc, predict=predict_uc)
     request.app.state.model_use_cases = use_cases
     return use_cases
+
+
+async def _load_pytorch_checkpoint(
+    model: Any,
+    repo: Any,
+) -> None:
+    """Carga pesos PyTorch desde checkpoint repo o archivos raw.
+
+    Prioridad:
+      1. Checkpoint repo (load_latest)
+      2. Archivos .pt + .pkl en models/ (fallback para import reciente)
+    """
+    from pathlib import Path
+
+    pt_path = Path("models/best_argos_lstm.pt")
+    scaler_path = Path("models/scaler_argos.pkl")
+
+    # Intentar checkpoint repo primero
+    try:
+        domain_model, weights_bytes = await repo.load_latest()
+        scaler_bytes = _load_scaler_from_repo(repo, domain_model)
+        model.load_weights_from_bytes(
+            pt_bytes=weights_bytes,
+            n_features=len(domain_model.config.features),
+            config=domain_model.config,
+            scaler_bytes=scaler_bytes,
+        )
+        log.info("pytorch_model_loaded_from_checkpoint",
+                 version=domain_model.model_version)
+        return
+    except Exception:
+        log.info("pytorch_checkpoint_not_found_trying_files")
+
+    # Fallback: archivos raw (modelos recien importados de Colab)
+    if pt_path.exists():
+        model.load_checkpoint(pt_path, scaler_path if scaler_path.exists() else None)
+        log.info("pytorch_model_loaded_from_files",
+                 pt=str(pt_path), scaler=str(scaler_path) if scaler_path.exists() else None)
+        return
+
+    log.warning("pytorch_model_not_loaded",
+                hint="place best_argos_lstm.pt in models/ or use import script")
+
+
+def _load_scaler_from_repo(repo: Any, domain_model: Any) -> bytes | None:
+    """Intenta cargar scaler desde el directorio del checkpoint."""
+    from pathlib import Path
+    version = domain_model.model_version
+    scaler_path = repo.base_dir / version / "scaler.pkl"
+    if scaler_path.exists():
+        return scaler_path.read_bytes()
+    return None
 
 
 class _CcxtOhlcvAdapter:

@@ -1,5 +1,6 @@
 """Domain entities (pure business rules)."""
 from .backtest_engine import BacktestEngine, BacktestError
+from .market_context import MarketContext
 from .nova_quant_model import (
     FeatureMismatchError,
     ModelVersionMismatchError,
@@ -21,6 +22,7 @@ from .signal_validator import (
 __all__ = [
     "BacktestEngine",
     "BacktestError",
+    "MarketContext",
     "PositionTracker",
     "TrackResult",
     "TrackerVerdict",

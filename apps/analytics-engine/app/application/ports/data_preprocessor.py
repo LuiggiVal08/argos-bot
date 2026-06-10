@@ -20,6 +20,7 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 
 from ...domain.value_objects.model_config import ModelConfig
+from ...domain.value_objects.scaler_type import ScalerType
 
 
 class InsufficientDataError(RuntimeError):
@@ -53,8 +54,9 @@ class DataPreprocessor(Protocol):
         features: np.ndarray,
         means: tuple[float, ...] | None = None,
         stds: tuple[float, ...] | None = None,
+        scaler_type: ScalerType = ScalerType.STANDARD,
     ) -> tuple[np.ndarray, tuple[float, ...], tuple[float, ...]]:
-        """Normaliza features con z-score.
+        """Normaliza features con el scaler indicado.
 
         Si means/stds son None, los calcula del array.
         Retorna (normalized, means, stds) para persistir.
@@ -77,10 +79,12 @@ class DataPreprocessor(Protocol):
         self,
         ohlcv: list[dict],
         config: ModelConfig,
+        atr_values: np.ndarray | None = None,
     ) -> np.ndarray:
         """Genera targets one-hot: BUY=[1,0,0], SELL=[0,1,0], HOLD=[0,0,1].
 
-        Usa config.target_lookahead y config.target_return_pct.
+        Si atr_values se proporciona, usa umbral dinámico vía ATR (1.5 * ATR).
+        Si no, usa config.target_return_pct.
         Retorna array (n_muestras, 3).
         """
         ...
