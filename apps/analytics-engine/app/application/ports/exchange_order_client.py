@@ -75,6 +75,11 @@ class ExchangeOrderClient(Protocol):
         Raises ExchangeOrderClientError on infrastructure failure."""
         ...
 
+    async def close_partial(self, symbol: str, quantity: Decimal) -> None:
+        """Close a partial quantity of a position at market.
+        Raises ExchangeOrderClientError on infrastructure failure."""
+        ...
+
     async def place_composite_order(
         self, order: CompositeOrder
     ) -> OrderResult:

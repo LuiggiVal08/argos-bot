@@ -40,6 +40,7 @@ __all__ = [
     "OrderStatus",
     "OrderType",
     "PositionSize",
+    "RegimeType",
     "RiskPct",
     "InvalidRiskPctError",
     "DEFAULT_RISK_PCT",

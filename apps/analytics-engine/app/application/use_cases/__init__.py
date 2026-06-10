@@ -5,6 +5,10 @@ from .check_drawdown import (
     CheckDrawdownResult,
 )
 from .execute_signal import ExecuteSignalUseCase, ExecuteSignalError, ExecuteSignalResult
+from .execute_trading_signal import (
+    ExecuteTradingSignalUseCase,
+    ExecuteSignalResult as ExecuteTradingSignalResult,
+)
 from .list_incidents import ListIncidentsUseCase
 from .monitor_positions import MonitorPositionsUseCase, MonitorPositionsError, MonitorResult
 from .notify_on_event import NotifyOnEventUseCase
@@ -41,6 +45,8 @@ __all__ = [
     "ExecuteSignalError",
     "ExecuteSignalResult",
     "ExecuteSignalUseCase",
+    "ExecuteTradingSignalResult",
+    "ExecuteTradingSignalUseCase",
     "ListIncidentsUseCase",
     "MonitorPositionsError",
     "MonitorPositionsUseCase",

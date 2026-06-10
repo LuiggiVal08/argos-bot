@@ -1,10 +1,10 @@
-"""MonitorPositionsUseCase — monitorea posiciones abiertas y cierra SL/TP.
+"""MonitorPositionsUseCase — monitorea posiciones y gestiona SL/TP/BE/trail.
 
 Pipeline:
   1. Cargar posiciones abiertas desde PositionRepository
   2. Para cada posición, obtener precio actual
-  3. Verificar SL/TP hits via PositionTracker
-  4. Si SL/TP hit: cerrar posición a mercado, loggear P&L
+  3. Evaluar via PositionManager (SL → TP → BE → trail → HOLD)
+  4. Ejecutar acciones según decisión (cerrar, parcial, actualizar SL)
   5. Actualizar estado en repositorio
 """
 from __future__ import annotations
@@ -15,6 +15,10 @@ from decimal import Decimal
 from typing import Awaitable, Callable
 from uuid import uuid4
 
+from ...domain.entities.position_manager import (
+    PositionAction,
+    PositionManager,
+)
 from ...domain.entities.position_tracker import PositionTracker, TrackerVerdict
 from ...domain.value_objects.execution_report import ExecutionReport
 from ...domain.value_objects.live_position import LivePosition
@@ -29,6 +33,10 @@ PriceProvider = Callable[[str], Awaitable[Decimal]]
 class MonitorResult:
     closed: int = 0
     held: int = 0
+    partial_closes: int = 0
+    sl_updates: int = 0
+    be_activations: int = 0
+    trail_activations: int = 0
     details: list[dict] = field(default_factory=list)
 
 
@@ -37,14 +45,16 @@ class MonitorPositionsError(RuntimeError):
 
 
 class MonitorPositionsUseCase:
-    """Monitorea posiciones abiertas y ejecuta cierres por SL/TP.
+    """Monitorea posiciones y ejecuta acciones inteligentes.
 
     Args:
-        position_repo:   Repositorio de posiciones.
-        exchange_client: Cliente para cerrar posiciones a mercado.
+        position_repo:    Repositorio de posiciones.
+        exchange_client:  Cliente para cerrar posiciones a mercado.
         execution_logger: Logger de eventos.
-        price_provider:  Callable async que retorna el precio actual
-                         de un símbolo.
+        price_provider:   Callable async que retorna el precio actual
+                          de un símbolo.
+        position_manager: Domain entity for BE/trail/partial decisions.
+        atr_provider:     Callable async que retorna el ATR actual.
     """
 
     def __init__(
@@ -53,11 +63,15 @@ class MonitorPositionsUseCase:
         exchange_client: ExchangeOrderClient,
         execution_logger: ExecutionLogger,
         price_provider: PriceProvider,
+        position_manager: PositionManager | None = None,
+        atr_provider: Callable[[str], Awaitable[Decimal]] | None = None,
     ) -> None:
         self._position_repo = position_repo
         self._exchange = exchange_client
         self._logger = execution_logger
         self._price_provider = price_provider
+        self._position_manager = position_manager or PositionManager()
+        self._atr_provider = atr_provider
 
     async def run(self) -> MonitorResult:
         positions = await self._position_repo.list_open()
@@ -66,66 +80,198 @@ class MonitorPositionsUseCase:
 
         closed = 0
         held = 0
+        partial_closes = 0
+        sl_updates = 0
+        be_activations = 0
+        trail_activations = 0
         details: list[dict] = []
 
         for pos in positions:
             price = await self._price_provider(pos.symbol)
-            result = PositionTracker.check(pos, price)
 
-            if result.verdict == TrackerVerdict.HOLD:
+            atr: Decimal | None = None
+            if self._atr_provider is not None:
+                try:
+                    atr = await self._atr_provider(pos.symbol)
+                except Exception:
+                    atr = None
+
+            decision = self._position_manager.evaluate(pos, price, atr)
+
+            if decision.action == PositionAction.HOLD:
                 held += 1
                 await self._logger.log_monitoring(
-                    pos.position_id, result.pnl, price
+                    pos.position_id, pos.compute_pnl_at(price), price
                 )
                 details.append({
                     "position_id": pos.position_id,
-                    "verdict": "HOLD",
-                    "pnl": str(result.pnl),
+                    "action": "HOLD",
+                    "reason": decision.reason,
                 })
                 continue
 
-            # SL or TP hit — close position
-            try:
-                await self._exchange.close_position(pos.symbol)
-            except Exception as e:
-                raise MonitorPositionsError(
-                    f"failed to close {pos.position_id}: {e}"
-                ) from e
+            if decision.action == PositionAction.CLOSE:
+                try:
+                    await self._exchange.close_position(pos.symbol)
+                except Exception as e:
+                    raise MonitorPositionsError(
+                        f"failed to close {pos.position_id}: {e}"
+                    ) from e
 
-            closed_pos = LivePosition(
-                position_id=pos.position_id,
-                symbol=pos.symbol,
-                side=pos.side,
-                units=pos.units,
-                entry_price=pos.entry_price,
-                current_price=pos.current_price,
-                sl_price=pos.sl_price,
-                tp_price=pos.tp_price,
-                opened_at=pos.opened_at,
-                closed_at=datetime.now(timezone.utc),
-                realized_pnl=result.pnl,
-                status=result.verdict.value,
-            )
-            await self._position_repo.save(closed_pos)
+                pnl = pos.compute_pnl_at(price)
+                closed_pos = LivePosition(
+                    position_id=pos.position_id,
+                    symbol=pos.symbol,
+                    side=pos.side,
+                    units=pos.units,
+                    entry_price=pos.entry_price,
+                    current_price=price,
+                    sl_price=pos.sl_price,
+                    tp_price=pos.tp_price,
+                    opened_at=pos.opened_at,
+                    closed_at=datetime.now(timezone.utc),
+                    realized_pnl=pnl,
+                    status="CLOSED",
+                )
+                await self._position_repo.save(closed_pos)
 
-            report = ExecutionReport(
-                report_id=uuid4().hex[:12],
-                signal_id="",
-                symbol=pos.symbol,
-                side=pos.side,
-                status="FILLED",
-                filled_qty=pos.units,
-                avg_price=price,
-                pnl=result.pnl,
-                position_id=pos.position_id,
-            )
-            await self._logger.log_execution(report)
-            closed += 1
-            details.append({
-                "position_id": pos.position_id,
-                "verdict": result.verdict.value,
-                "pnl": str(result.pnl),
-                "price": str(price),
-            })
+                report = ExecutionReport(
+                    report_id=uuid4().hex[:12],
+                    signal_id="",
+                    symbol=pos.symbol,
+                    side=pos.side,
+                    status="FILLED",
+                    filled_qty=pos.units,
+                    avg_price=price,
+                    pnl=pnl,
+                    position_id=pos.position_id,
+                )
+                await self._logger.log_execution(report)
+                closed += 1
+                details.append({
+                    "position_id": pos.position_id,
+                    "action": "CLOSE",
+                    "reason": decision.reason,
+                    "pnl": str(pnl),
+                })
+                continue
 
-        return MonitorResult(closed=closed, held=held, details=details)
+            if decision.action == PositionAction.PARTIAL_CLOSE:
+                try:
+                    close_units = (pos.units * decision.close_pct).quantize(
+                        Decimal("0.00000001")
+                    )
+                    await self._exchange.close_partial(
+                        pos.symbol, close_units
+                    )
+                except Exception as e:
+                    raise MonitorPositionsError(
+                        f"failed partial close {pos.position_id}: {e}"
+                    ) from e
+
+                remaining = pos.units - close_units
+                pnl = pos.compute_pnl_at(price) * decision.close_pct
+                updated_pos = LivePosition(
+                    position_id=pos.position_id,
+                    symbol=pos.symbol,
+                    side=pos.side,
+                    units=remaining,
+                    entry_price=pos.entry_price,
+                    current_price=price,
+                    sl_price=pos.sl_price,
+                    tp_price=pos.tp_price,
+                    tp2_price=pos.tp2_price,
+                    tp3_price=pos.tp3_price,
+                    trail_activated=pos.trail_activated,
+                    trail_offset=pos.trail_offset,
+                    break_even_activated=pos.break_even_activated,
+                    atr_at_entry=pos.atr_at_entry,
+                    initial_units=pos.initial_units,
+                    tp1_pct=pos.tp1_pct,
+                    tp2_pct=pos.tp2_pct,
+                    opened_at=pos.opened_at,
+                    status="PARTIALLY_CLOSED" if remaining > 0 else "CLOSED",
+                )
+                await self._position_repo.save(updated_pos)
+
+                if remaining <= 0:
+                    report = ExecutionReport(
+                        report_id=uuid4().hex[:12],
+                        signal_id="",
+                        symbol=pos.symbol,
+                        side=pos.side,
+                        status="FILLED",
+                        filled_qty=pos.units,
+                        avg_price=price,
+                        pnl=pnl,
+                        position_id=pos.position_id,
+                    )
+                    await self._logger.log_execution(report)
+
+                partial_closes += 1
+                details.append({
+                    "position_id": pos.position_id,
+                    "action": "PARTIAL_CLOSE",
+                    "close_pct": str(decision.close_pct),
+                    "tp_level": decision.tp_level,
+                    "reason": decision.reason,
+                })
+                continue
+
+            if decision.action in (
+                PositionAction.ACTIVATE_BREAK_EVEN,
+                PositionAction.UPDATE_SL,
+                PositionAction.ACTIVATE_TRAIL,
+            ):
+                is_be = decision.action == PositionAction.ACTIVATE_BREAK_EVEN
+                is_trail = decision.action == PositionAction.ACTIVATE_TRAIL
+                new_sl = decision.new_sl_price
+
+                updated_pos = LivePosition(
+                    position_id=pos.position_id,
+                    symbol=pos.symbol,
+                    side=pos.side,
+                    units=pos.units,
+                    entry_price=pos.entry_price,
+                    current_price=price,
+                    sl_price=new_sl or pos.sl_price,
+                    tp_price=pos.tp_price,
+                    tp2_price=pos.tp2_price,
+                    tp3_price=pos.tp3_price,
+                    trail_activated=is_trail or pos.trail_activated,
+                    trail_offset=pos.trail_offset or (
+                        atr * Decimal("1.5") if atr else pos.atr_at_entry
+                    ) if is_trail else pos.trail_offset,
+                    break_even_activated=is_be or pos.break_even_activated,
+                    atr_at_entry=pos.atr_at_entry,
+                    initial_units=pos.initial_units,
+                    tp1_pct=pos.tp1_pct,
+                    tp2_pct=pos.tp2_pct,
+                    opened_at=pos.opened_at,
+                    status="OPEN",
+                )
+                await self._position_repo.save(updated_pos)
+
+                if is_be:
+                    be_activations += 1
+                elif is_trail:
+                    trail_activations += 1
+                else:
+                    sl_updates += 1
+
+                details.append({
+                    "position_id": pos.position_id,
+                    "action": decision.action.value,
+                    "new_sl": str(new_sl) if new_sl else None,
+                    "reason": decision.reason,
+                })
+
+        return MonitorResult(
+            closed=closed,
+            held=held,
+            partial_closes=partial_closes,
+            sl_updates=sl_updates,
+            be_activations=be_activations,
+            trail_activations=trail_activations,
+            details=details,
+        )
