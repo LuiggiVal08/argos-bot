@@ -119,9 +119,9 @@ def _append_to_parquet(
     if parquet_path.exists():
         existing = pq.read_table(parquet_path)
         combined = pa.concat_tables([existing, table])
-        pq.write_table(combined, parquet_path, schema=schema)
+        pq.write_table(combined, parquet_path)
     else:
-        pq.write_table(table, parquet_path, schema=schema)
+        pq.write_table(table, parquet_path)
 
 
 async def download_raw_ohlcv(

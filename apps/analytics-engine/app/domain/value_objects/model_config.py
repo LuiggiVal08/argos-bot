@@ -47,21 +47,11 @@ class ModelConfig:
     confidence_threshold: float = 0.7
     layers: tuple[int, ...] = (128, 64, 32, 16)
     features: tuple[str, ...] = (
-        "return_1",
-        "return_5",
-        "rsi_14",
-        "rsi_21",
-        "macd_line",
-        "macd_signal",
-        "macd_histogram",
-        "bb_position",
-        "bb_width",
-        "atr_14",
-        "volume_sma_20",
-        "volume_ratio",
-        "stoch_k",
-        "stoch_d",
-        "obv",
+        "open", "high", "low", "close", "volume",
+        "rsi", "ema_fast", "ema_medium", "ema_slow",
+        "macd", "macd_signal", "macd_hist",
+        "bb_upper", "bb_middle", "bb_lower",
+        "atr", "obv", "volume_sma", "pct_change",
     )
     target_lookahead: int = 5
     target_return_pct: float = 1.0
