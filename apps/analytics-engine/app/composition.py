@@ -24,6 +24,9 @@ import structlog
 
 from fastapi import Request
 
+from .application.ports.multi_symbol_consolidator import (
+    MultiSymbolConsolidator,
+)
 from .application.ports.min_lot_provider import (
     MarketConstraints,
     MinLotProvider,
@@ -43,7 +46,10 @@ from .application.ports.drawdown_snapshot_repo import (
 )
 from .application.ports.atr_calculator import AtrCalculator
 from .application.ports.backtest_reporter import BacktestReporter, MetricsCalculator
+from .application.ports.class_balancer import ClassBalancer
+from .application.ports.data_preprocessor import DataPreprocessor
 from .application.ports.execution_logger import ExecutionLogger
+from .application.ports.feature_store import FeatureStore
 from .application.ports.incident_reporter import IncidentReporter
 from .application.ports.notifier import Notifier
 from .application.ports.incident_repository import IncidentRepository
@@ -61,6 +67,7 @@ from .application.use_cases.open_day import OpenDayUseCase
 from .application.use_cases.place_order import PlaceOrderUseCase
 from .application.use_cases.predict_signal import PredictSignalUseCase
 from .application.use_cases.report_incident import ReportIncidentUseCase
+from .application.use_cases.build_dataset import BuildDatasetUseCase
 from .application.use_cases.run_backtest import RunBacktestUseCase
 from .application.use_cases.train_model import TrainModelUseCase
 from .application.use_cases.trip_circuit_breaker import (
@@ -91,6 +98,11 @@ from .infrastructure.monitoring.in_memory_incident_repo import (
     InMemoryIncidentRepository,
 )
 from .infrastructure.monitoring.logging_incident_reporter import (
+    LoggingIncidentReporter,
+)
+from .infrastructure.data.multi_symbol_consolidator import ParquetMultiSymbolConsolidator
+from .infrastructure.data.feature_store import ParquetFeatureStore
+from .infrastructure.training.class_balancer import WeightedLossBalancer
     LoggingIncidentReporter,
 )
 from .infrastructure.notification.composite_notifier import (
@@ -458,6 +470,33 @@ def get_notify_on_event_usecase(
     request: Request,
 ) -> NotifyOnEventUseCase:
     return _comp(request).notify_on_event
+
+
+# Part II — Dataset build use case (cached in app.state) -----------------------
+
+
+def get_build_dataset_usecase(request: Request) -> BuildDatasetUseCase:
+    cached: BuildDatasetUseCase | None = getattr(
+        request.app.state, "build_dataset_usecase", None
+    )
+    if cached is not None:
+        return cached
+
+    from .infrastructure.training.data_preprocessor import TaDataPreprocessor
+
+    consolidator = ParquetMultiSymbolConsolidator()
+    preprocessor = TaDataPreprocessor()
+    feature_store = ParquetFeatureStore()
+    balancer: ClassBalancer = WeightedLossBalancer()
+
+    use_case = BuildDatasetUseCase(
+        consolidator=consolidator,
+        preprocessor=preprocessor,
+        feature_store=feature_store,
+        balancer=balancer,
+    )
+    request.app.state.build_dataset_usecase = use_case
+    return use_case
 
 
 # H8 — Backtest use cases (cached in app.state) --------------------------------

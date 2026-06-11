@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from .api import (
     backtest_router,
     circuit_breaker_router,
+    dataset_router,
     execution_router,
     incident_router,
     model_router,
@@ -28,6 +29,7 @@ app.include_router(incident_router)
 app.include_router(model_router)
 app.include_router(order_router)
 app.include_router(backtest_router)
+app.include_router(dataset_router)
 app.include_router(execution_router)
 app.include_router(notification_router)
 
