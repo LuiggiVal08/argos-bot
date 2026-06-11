@@ -18,6 +18,7 @@ from .api import (
     notification_router,
     order_router,
     risk_router,
+    training_router,
 )
 from .composition import Composition, build_composition
 
@@ -32,6 +33,7 @@ app.include_router(backtest_router)
 app.include_router(dataset_router)
 app.include_router(execution_router)
 app.include_router(notification_router)
+app.include_router(training_router)
 
 
 @asynccontextmanager

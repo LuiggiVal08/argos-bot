@@ -8,6 +8,7 @@ from .model import router as model_router
 from .notification import notification_router
 from .order import router as order_router
 from .risk import router as risk_router
+from .training import router as training_router
 
 __all__ = [
     "backtest_router",
@@ -19,4 +20,5 @@ __all__ = [
     "notification_router",
     "order_router",
     "risk_router",
+    "training_router",
 ]
