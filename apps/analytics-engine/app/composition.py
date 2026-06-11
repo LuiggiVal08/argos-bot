@@ -53,6 +53,7 @@ from .application.use_cases.compute_position_size import (
     ComputePositionSizeUseCase,
 )
 from .application.use_cases.execute_signal import ExecuteSignalUseCase
+from .application.use_cases.execution_engine import ExecutionEngine
 from .application.use_cases.list_incidents import ListIncidentsUseCase
 from .application.use_cases.monitor_positions import MonitorPositionsUseCase
 from .application.use_cases.notify_on_event import NotifyOnEventUseCase
@@ -708,6 +709,61 @@ def get_execute_signal_usecase(request: Request) -> ExecuteSignalUseCase:
     )
     request.app.state.execute_signal_usecase = use_case
     return use_case
+
+
+def get_execution_engine_usecase(request: Request) -> ExecutionEngine:
+    """Return the ExecutionEngine (Signal→Risk→Portfolio→Execute), cached."""
+    cached: ExecutionEngine | None = getattr(
+        request.app.state, "execution_engine_usecase", None
+    )
+    if cached is not None:
+        return cached
+
+    comp = _comp(request)
+
+    from .domain.entities.risk_engine import RiskEngine
+    from .domain.entities.portfolio_manager import PortfolioManager
+    from .domain.entities.position_manager import PositionManager
+
+    validator = SignalValidator()
+
+    if comp.mode == "BACKTESTING":
+        balance_provider: BalanceProvider = MockBalanceProvider(Decimal("10000"))
+        atr_calc: AtrCalculator = _FakeAtrCalculator()
+    else:
+        balance_provider = CcxtBalanceProvider(exchange=comp.exchange)
+        atr_calc = TaAtrCalculator(
+            source=lambda s, t, w: ccxt_ohlcv_source(comp.exchange, s, t, w)
+        )
+
+    if comp.mode == "BACKTESTING":
+        exchange_client: ExchangeOrderClient = _NoopOrderClient()
+        async def _ee_not_halted() -> bool:
+            return False
+        drawdown_checker = _ee_not_halted
+    else:
+        exchange_client = _build_order_client(comp.exchange)
+        async def _ee_check_halted() -> bool:
+            return comp.check_drawdown.is_halted()
+        drawdown_checker = _ee_check_halted
+
+    position_repo = get_position_repo(request)
+    execution_logger = StructlogExecutionLogger()
+
+    engine = ExecutionEngine(
+        signal_validator=validator,
+        balance_provider=balance_provider,
+        atr_calculator=atr_calc,
+        exchange_client=exchange_client,
+        position_repo=position_repo,
+        execution_logger=execution_logger,
+        is_halted=drawdown_checker,
+        risk_engine=RiskEngine(),
+        portfolio_manager=PortfolioManager(),
+        position_manager=PositionManager(),
+    )
+    request.app.state.execution_engine_usecase = engine
+    return engine
 
 
 def get_monitor_positions_usecase(request: Request) -> MonitorPositionsUseCase:

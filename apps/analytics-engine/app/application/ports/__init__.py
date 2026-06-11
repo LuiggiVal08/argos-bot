@@ -19,6 +19,10 @@ from .data_preprocessor import (
     InsufficientDataError,
     PreprocessingError,
 )
+from .exchange_order_gateway import (
+    ExchangeOrderGateway,
+    ExchangeOrderGatewayError,
+)
 from .execution_logger import ExecutionLogger
 from .feature_analyzer import AnalysisError, FeatureAnalyzer
 from .feature_store import FeatureStore
@@ -33,7 +37,7 @@ from .multi_symbol_consolidator import MultiSymbolConsolidator
 from .ohlcv_source import OhlcvSource, OhlcvSourceError
 from .position_repository import PositionRepository
 from .probability_calibrator import ProbabilityCalibrator
-from .regime_detector import RegimeDetector
+from .regime_detector import RegimeDetector, RegimeDetectionError
 from .signal_consumer import SignalConsumer
 from .strategy import Strategy, StrategyRegistry
 from .uncertainty_estimator import UncertaintyEstimator
@@ -41,6 +45,8 @@ from .uncertainty_estimator import UncertaintyEstimator
 __all__ = [
     "AnalysisError",
     "AtrCalculator",
+    "ExchangeOrderGateway",
+    "ExchangeOrderGatewayError",
     "AtrCalculatorError",
     "BacktestReporter",
     "BalanceProvider",
@@ -73,6 +79,7 @@ __all__ = [
     "PreprocessingError",
     "ProbabilityCalibrator",
     "RegimeDetector",
+    "RegimeDetectionError",
     "SignalConsumer",
     "Strategy",
     "StrategyRegistry",
