@@ -1,5 +1,6 @@
-import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from "@nestjs/common"
+import { Injectable, Inject, OnModuleDestroy, OnModuleInit, Logger } from "@nestjs/common"
 import Redis from "ioredis"
+import { EVENT_STORE } from "../config/tokens"
 import { EventStore } from "../../application/ports/event-store.port"
 import { TickData, CandleData } from "../../domain/entities/historical-event"
 import { FeatureVectorData } from "../../domain/entities/feature-vector"
@@ -48,7 +49,7 @@ export class HistoricalPipelineService implements OnModuleInit, OnModuleDestroy 
     })),
   ]
 
-  constructor(private readonly store: EventStore) {}
+  constructor(@Inject(EVENT_STORE) private readonly store: EventStore) {}
 
   async onModuleInit(): Promise<void> {
     const url = process.env.ARGOS_BROKER_URL
