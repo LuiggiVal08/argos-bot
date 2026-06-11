@@ -8,36 +8,19 @@ import {
   HEALTH_MONITOR,
   STREAM_NAME,
   TICK_BUFFER,
-  CANDLE_STORE,
-  CANDLE_PUBLISHER,
-  FEATURE_CALCULATOR,
-  FEATURE_PUBLISHER,
-  EVENT_STORE,
 } from "./infrastructure/config/tokens"
 import { RedisProtocolBus } from "./infrastructure/messaging/redis-protocol-bus"
 import { BinanceWebSocketAdapter } from "./infrastructure/messaging/binance-websocket.adapter"
 import { InMemoryTickBuffer } from "./infrastructure/messaging/in-memory-tick-buffer"
 import { BusHealthMonitor } from "./infrastructure/messaging/bus-health-monitor"
-import { InMemoryCandleStore } from "./infrastructure/messaging/in-memory-candle-store"
-import { RedisCandlePublisher } from "./infrastructure/messaging/redis-candle-publisher"
 import { Symbol } from "./domain/value-objects/symbol"
 import { StreamName } from "./domain/value-objects/stream-name"
 import { IngestTickUseCase } from "./application/use-cases/ingest-tick.usecase"
 import { BufferTickUseCase } from "./application/use-cases/buffer-tick.usecase"
 import { FlushBufferUseCase } from "./application/use-cases/flush-buffer.usecase"
 import { HealthMonitorUseCase } from "./application/use-cases/health-monitor.usecase"
-import { BuildCandlesUseCase } from "./application/use-cases/build-candles.usecase"
-import { CalculateFeaturesUseCase } from "./application/use-cases/calculate-features.usecase"
 import { NotificationConsumer } from "./infrastructure/notification/notification-consumer"
 import { TickPipelineService } from "./infrastructure/services/tick-pipeline.service"
-import { CandlePipelineService } from "./infrastructure/services/candle-pipeline.service"
-import { FeaturePipelineService } from "./infrastructure/services/feature-pipeline.service"
-import { TechnicalIndicatorCalculator } from "./infrastructure/indicators/technical-indicator-calculator"
-import { RedisFeaturePublisher } from "./infrastructure/messaging/redis-feature-publisher"
-import { EventStore } from "./application/ports/event-store.port"
-import { FileEventStore } from "./infrastructure/storage/file-event-store"
-import { HistoricalPipelineService } from "./infrastructure/services/historical-pipeline.service"
-import { ReplayMarketUseCase } from "./application/use-cases/replay-market.usecase"
 
 const log = (m: string): void => {
   // eslint-disable-next-line no-console
@@ -128,74 +111,6 @@ const healthMonitorUseCaseProvider: Provider = {
     }),
 }
 
-const candleStoreProvider: Provider = {
-  provide: CANDLE_STORE,
-  useFactory: (): InMemoryCandleStore => new InMemoryCandleStore(),
-}
-
-const candlePublisherProvider: Provider = {
-  provide: CANDLE_PUBLISHER,
-  useFactory: (): RedisCandlePublisher => {
-    const url = process.env.ARGOS_BROKER_URL
-    if (!url) throw new Error("AppModule: ARGOS_BROKER_URL is required")
-    return new RedisCandlePublisher({
-      url,
-      streamPrefix: "candles:",
-    })
-  },
-}
-
-const buildCandlesProvider: Provider = {
-  provide: BuildCandlesUseCase,
-  inject: [CANDLE_STORE, CANDLE_PUBLISHER],
-  useFactory: (
-    store: InMemoryCandleStore,
-    publisher: RedisCandlePublisher,
-  ): BuildCandlesUseCase => new BuildCandlesUseCase(store, publisher),
-}
-
-const featureCalculatorProvider: Provider = {
-  provide: FEATURE_CALCULATOR,
-  useFactory: (): TechnicalIndicatorCalculator =>
-    new TechnicalIndicatorCalculator(),
-}
-
-const featurePublisherProvider: Provider = {
-  provide: FEATURE_PUBLISHER,
-  useFactory: (): RedisFeaturePublisher => {
-    const url = process.env.ARGOS_BROKER_URL
-    if (!url) throw new Error("AppModule: ARGOS_BROKER_URL is required")
-    return new RedisFeaturePublisher({ url, streamPrefix: "features:" })
-  },
-}
-
-const calculateFeaturesProvider: Provider = {
-  provide: CalculateFeaturesUseCase,
-  inject: [FEATURE_CALCULATOR, FEATURE_PUBLISHER],
-  useFactory: (
-    calculator: TechnicalIndicatorCalculator,
-    publisher: RedisFeaturePublisher,
-  ): CalculateFeaturesUseCase =>
-    new CalculateFeaturesUseCase(calculator, publisher),
-}
-
-const eventStoreProvider: Provider = {
-  provide: EVENT_STORE,
-  useFactory: (): FileEventStore => {
-    const baseDir = process.env.ARGOS_HISTORICAL_DIR ?? "./data/historical"
-    return new FileEventStore({ baseDir })
-  },
-}
-
-const replayProvider: Provider = {
-  provide: ReplayMarketUseCase,
-  inject: [EVENT_STORE, BUS],
-  useFactory: (
-    store: EventStore,
-    bus: RedisProtocolBus,
-  ): ReplayMarketUseCase => new ReplayMarketUseCase(store, bus),
-}
-
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true })],
   controllers: [HealthController, HealthControllerBus],
@@ -209,18 +124,7 @@ const replayProvider: Provider = {
     bufferUseCaseProvider,
     flushProvider,
     healthMonitorUseCaseProvider,
-    candleStoreProvider,
-    candlePublisherProvider,
-    buildCandlesProvider,
-    featureCalculatorProvider,
-    featurePublisherProvider,
-    calculateFeaturesProvider,
-    eventStoreProvider,
-    replayProvider,
     TickPipelineService,
-    CandlePipelineService,
-    FeaturePipelineService,
-    HistoricalPipelineService,
     NotificationConsumer,
   ],
 })

@@ -1,9 +1,7 @@
 import { Price } from "../value-objects/price"
 import { Symbol } from "../value-objects/symbol"
 import { StreamName } from "../value-objects/stream-name"
-import { Timeframe } from "../value-objects/timeframe"
 import { Tick } from "../entities/tick"
-import { FeatureVector } from "../entities/feature-vector"
 
 describe("Symbol", () => {
   it("parses valid BTC/USDT", () => {
@@ -119,28 +117,5 @@ describe("Tick", () => {
     expect(back.price.equals(t.price)).toBe(true)
     expect(back.symbol.equals(t.symbol)).toBe(true)
     expect(back.quantity).toBe(t.quantity)
-  })
-
-  it("FeatureVector rejects non-finite values", () => {
-    const s = Symbol.parse("BTC/USDT")
-    const tf = Timeframe.ONE_MIN
-    const v = FeatureVector.create(s, tf, 0)
-    expect(() => v.add("x", NaN)).toThrow()
-    expect(() => v.add("x", Infinity)).toThrow()
-    expect(() => v.add("x", -Infinity)).toThrow()
-  })
-
-  it("FeatureVector toJSON roundtrips", () => {
-    const s = Symbol.parse("ETH/USDT")
-    const tf = Timeframe.FIVE_MIN
-    const v = FeatureVector.create(s, tf, 300000)
-      .add("rsi_14", 42)
-      .add("ema_9", 3200.5)
-    const back = FeatureVector.fromJSON(v.toJSON())
-    expect(back.symbol.equals(s)).toBe(true)
-    expect(back.timeframe.equals(tf)).toBe(true)
-    expect(back.timestamp).toBe(300000)
-    expect(back.get("rsi_14")).toBe(42)
-    expect(back.get("ema_9")).toBe(3200.5)
   })
 })
