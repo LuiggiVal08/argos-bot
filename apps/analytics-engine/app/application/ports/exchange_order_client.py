@@ -69,6 +69,17 @@ class ExchangeOrderClient(Protocol):
         ExchangeOrderClientError on infrastructure failure."""
         ...
 
+    async def close_position(self, symbol: str) -> PositionSummary:
+        """Close the active position for a single symbol.
+        Returns a PositionSummary describing the closed position.
+        Raises ExchangeOrderClientError on infrastructure failure."""
+        ...
+
+    async def close_partial(self, symbol: str, quantity: Decimal) -> None:
+        """Close a partial quantity of a position at market.
+        Raises ExchangeOrderClientError on infrastructure failure."""
+        ...
+
     async def place_composite_order(
         self, order: CompositeOrder
     ) -> OrderResult:

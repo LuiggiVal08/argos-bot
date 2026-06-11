@@ -1,0 +1,1 @@
+"""Analysis package — market regime, confidence filter, etc."""

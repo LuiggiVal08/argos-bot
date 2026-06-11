@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.27",
     "pandas>=2.1",
     "numpy>=1.26",
+    "pyarrow>=14.0",
     "ta>=0.11",
     "ccxt>=4.1",
     "redis>=5.0",

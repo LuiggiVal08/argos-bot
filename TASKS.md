@@ -5,7 +5,7 @@ completed: 94
 in_progress: 0
 blocked: 0
 overall_pct: 100
-last_updated: 2026-06-09
+last_updated: 2026-06-11
 ---
 
 # TASKS — argos-bot
@@ -33,6 +33,12 @@ last_updated: 2026-06-09
 | H7    | Live Execution Engine   | ✅     | 100%   | 9/9    |
 | H8    | Backtesting Engine      | ✅     | 100%   | 9/9    |
 | H9    | Telemetry Webhooks      | ✅     | 100%   | 9/9    |
+| H8–12 | ARGOS 2.0 Data Engine   | ✅     | 100%   | 39/39  |
+| H23–29| ARGOS 2.0 Part III      | ✅     | 100%   | 45/45  |
+| H30–39| ARGOS 2.0 Part IV       | ✅     | 100%   | 25/25  |
+| H13–22| ARGOS 2.0 Part II        | ✅     | 100%   | 8/8    |
+| H40–50| ARGOS 2.0 Part V         | ✅     | 100%   | 24/24  |
+| H51–59| ARGOS 2.0 Part VI        | ✅     | 100%   | 11/11  |
 
 ---
 
@@ -336,6 +342,111 @@ _Ninguno actualmente._
 
 ---
 
+## 📊 ARGOS 2.0 — Data Engine (NestJS) — H8–H12
+
+> Candle pipeline, feature calculation, historical events, market replay.
+
+- [x] H8–H12-001 — Domain entities: Candle, FeatureVector, HistoricalEvent
+- [x] H8–H12-002 — Domain VOs: Timeframe, Volume
+- [x] H8–H12-003 — Ports: CandleStore, CandlePublisher, FeatureCalculator, FeaturePublisher, EventStore, HistoricalDataProvider
+- [x] H8–H12-004 — Use cases: BuildCandlesUseCase, CalculateFeaturesUseCase, RecoverCandleUseCase, ReplayMarketUseCase
+- [x] H8–H12-005 — Infrastructure: InMemoryCandleStore, RedisCandlePublisher, RedisFeaturePublisher, FileEventStore
+- [x] H8–H12-006 — CandlePipelineService + FeaturePipelineService
+- [x] H8–H12-007 — 11 pure-TS indicators in TechnicalIndicatorCalculator
+- [x] H8–H12-008 — NestJS module wiring in app.module.ts
+- [x] H8–H12-009 — 73 tests (49 unit domain + 24 integration pipeline)
+
+**Archivos**: 39 files (new + modified) in `apps/data-engine/src/`
+
+---
+
+## 📊 ARGOS 2.0 — Analytics Part III (Model Pipeline) — H23–H29
+
+> NovaQuant model pipeline: features, regime detection, ensemble, meta-model, calibration, uncertainty.
+
+- [x] H23–H29-001 — Domain: MarketContext entity, RegimeType/ScalerType VOs
+- [x] H23–H29-002 — 8 ports: ClassBalancer, ConfidenceFilter, FeatureStore, MetaModel, MultiSymbolConsolidator, ProbabilityCalibrator, RegimeDetector, UncertaintyEstimator
+- [x] H23–H29-003 — Infrastructure: RuleBasedRegimeDetector, NovaQuantXGBoostModel, NovaQuantPyTorchModel, MCDropoutUncertaintyEstimator, SklearnProbabilityCalibrator, XGBoostMetaModel
+- [x] H23–H29-004 — BuildDatasetUseCase with configurable scalers + class balancing
+- [x] H23–H29-005 — Async composition: get_model_use_cases with PyTorch/TF branching
+- [x] H23–H29-006 — 16 indicators including ADX14, BBW
+- [x] H23–H29-007 — 7 test files (ADX, regime detector, meta model, confidence filter, uncertainty estimator, feature extractor, NovaQuant VOs)
+
+**Archivos**: 45 files (33 new + 12 modified) in `apps/analytics-engine/`
+
+---
+
+## 📊 ARGOS 2.0 — Analytics Part IV (Execution Engine) — H30–H39
+
+> Position management, risk engine, portfolio manager, correlation, execution orchestrator.
+
+- [x] H30–H39-001 — Domain: PositionManager (multi-TP/BE/trail/risk_multiple), RiskEngine (5 checks), PortfolioManager (exposure/per-symbol/correlation/heat/position limits), CorrelationEngine (pearson returns)
+- [x] H30–H39-002 — Use cases: ExecutionEngine orchestrator (SignalValidator→CircuitBreaker→RiskEngine→PortfolioManager→sizing→order→log), ExecuteTradingSignalUseCase
+- [x] H30–H39-003 — Ports: ExchangeOrderGateway, ExchangeOrderClient.close_partial()
+- [x] H30–H39-004 — Infrastructure: MockExchangeAdapter
+- [x] H30–H39-005 — LivePosition extended with multi-TP/BE/trail fields
+- [x] H30–H39-006 — PositionTracker enhanced with partial TP + trailing SL
+- [x] H30–H39-007 — MonitorPositionsUseCase refactored to use PositionManager
+- [x] H30–H39-008 — API: POST /execute/engine
+- [x] H30–H39-009 — 7 test files (position manager, risk engine, portfolio manager, correlation, execution engine, execute trading signal, mock adapter)
+- [x] H30–H39-010 — 14 tests for ExecutionEngine
+
+**Archivos**: 25 files (16 new + 9 modified) in `apps/analytics-engine/`
+
+---
+
+## 📊 ARGOS 2.0 — Analytics Part II (Dataset & Feature Engine) — H13–H22
+
+> Labeling engine, window builder, normalizer, dataset validator. API endpoint for dataset building.
+
+- [x] H13–H20-001 — Domain: LabelingEngine (ATR-based BUY/SELL/HOLD classification)
+- [x] H13–H20-002 — Domain: WindowBuilder (sliding window config + indices)
+- [x] H13–H20-003 — Domain: Normalizer (Standard/MINMAX/Robust scaling params)
+- [x] H13–H20-004 — Domain: DatasetValidator (schema validation)
+- [x] H13–H20-005 — Ports: MultiSymbolConsolidator, FeatureStore, ClassBalancer, DataPreprocessor
+- [x] H13–H20-006 — Use case: BuildDatasetUseCase (consolidate → preprocess → label → balance → store)
+- [x] H13–H20-007 — API: POST /dataset/build
+- [x] H13–H20-008 — Composition wiring in get_build_dataset_usecase
+
+**Archivos**: 8 files (new + modified) in `apps/analytics-engine/`
+
+---
+
+## 📊 ARGOS 2.0 — Analytics Part V (Training Engine) — H40–H50
+
+> Model registry with versioned champion/challenger, promotion engine with gates, rollback, shadow deployment, walk-forward validation, feature importance.
+
+- [x] H40–H50-001 — Domain: ModelRegistry (versioned + champion/challenger tracking)
+- [x] H40–H50-002 — Domain: PromotionEngine (Sharpe ≥5% improvement, PF ≥3, DD ≤2% increase, WR ≥40%)
+- [x] H40–H50-003 — Domain: RollbackEngine (version rollback safety)
+- [x] H40–H50-004 — Domain: ChampionChallenger (multi-metric comparison)
+- [x] H40–H50-005 — Domain: ShadowModelManager (max 3 shadows, evict after 1000 predictions)
+- [x] H40–H50-006 — Domain: WalkForwardValidator (sliding window CV)
+- [x] H40–H50-007 — Domain: FeatureImportance (gain-based calculator)
+- [x] H40–H50-008 — 9 use cases: register, list, promote, rollback, compare, deploy shadow, list shadows, walk forward, feature importance
+- [x] H40–H50-009 — 8 endpoints under /training/*
+- [x] H40–H50-010 — Infra: FileSystemModelRepository, SimpleWalkForwardRunner, GainFeatureImportanceCalculator
+
+**Archivos**: 24 files (new + modified) in `apps/analytics-engine/`
+
+---
+
+## 📊 ARGOS 2.0 — Analytics Part VI (Observability & Disaster Recovery) — H51–H59
+
+> Telemetry engine, dashboard panels, disaster recovery with auto-mode escalation, centralized structured logging.
+
+- [x] H51–H59-001 — Domain: TelemetryEngine (4-engine metrics collection, 10k point buffer auto-evict)
+- [x] H51–H59-002 — Domain: DashboardEngine (market/AI/risk/training panels)
+- [x] H51–H59-003 — Domain: DisasterRecovery (auto-mode escalation NORMAL→DEGRADED→SAFE→HALTED)
+- [x] H51–H59-004 — Domain: CentralizedLogger (structured log levels + filter)
+- [x] H51–H59-005 — Use cases: CollectTelemetryUseCase, RecordTelemetryUseCase, UpdateDashboardUseCase, GetDashboardUseCase, GetDashboardHistoryUseCase, ReportIncidentExtendedUseCase, GetDisasterStatusUseCase, RecoverFromIncidentUseCase
+- [x] H51–H59-006 — API: /observability/telemetry, /observability/dashboard, /observability/disaster/*
+- [x] H51–H59-007 — Composition wiring for all Part VI use cases
+
+**Archivos**: 11 files (new + modified) in `apps/analytics-engine/`
+
+---
+
 ## Bitácora
 
 ### 2026-06-07 — Sesión H5: Secrets & Env Mode
@@ -421,6 +532,28 @@ _Ninguno actualmente._
 - 🐛 Bug fix: singleton module-level en get_backtest_usecase() causaba tests no deterministas. Refactor a app.state como los otros use cases.
 - ✅ Validación: pytest 264/265, arch_lint PASS, secret_scan clean.
 
+### 2026-06-09 — Sesión: CcxtBinanceTestnetAdapter (Spot Testnet)
+- ✅ Agregado `close_position(symbol)` al port `ExchangeOrderClient`
+- ✅ Actualizado `_NoopOrderClient` y `CcxtOrderClient` con `close_position`
+- ✅ Creado `infrastructure/trading/ccxt_binance_adapter.py` — `CcxtBinanceTestnetAdapter` con ExchangeOrderClient + PriceProvider
+- ✅ Wiring en `composition.py`: `_build_exchange()` detecta `BINANCE_TESTNET=true`, crea exchange Spot con sandbox mode
+- ✅ `_build_order_client()` helper retorna `CcxtBinanceTestnetAdapter` o `CcxtOrderClient` según modo
+- ✅ `MonitorPositionsUseCase` ahora usa `CcxtBinanceTestnetAdapter.get_price()` real en testnet (con cache 1s)
+- ✅ `preflight.py` valida `BINANCE_TESTNET_API_KEY`/`SECRET` en LIVE+testnet
+- ✅ 20 tests unitarios (get_price, close_position, cancel_all, place_composite, emergency, close_all)
+- ✅ 357/358 pytest pass (1 skipped), arch_lint PASS, secret_scan clean (solo falsos positivos en skills/)
+
+### 2026-06-10 — Sesión: ARGOS 2.0 H8–H39 completo + Branch split
+
+- ✅ All 462 tests pass (1 skipped), arch_lint PASS, typecheck PASS, lint PASS.
+- ✅ **Branch 1** (`feature/h8-h12-data-engine`): 39 data-engine files committed, pushed.
+- ✅ **Branch 2** (`feature/h23-h29-part-iii`): 45 analytics-engine files (Part III: NovaQuant model pipeline, regime detection, dataset builder), pushed.
+- ✅ **Branch 3** (`feature/h30-h39-part-iv`): 25 analytics-engine files (Part IV: Execution Engine, Risk Engine, Portfolio Manager, Position Manager, Correlation Engine), pushed.
+- ✅ Shared `__init__.py` files and `composition.py` crafted with correct Part-III/Part-IV-only exports.
+- ✅ Merge order: H8-H12 → H23-H29 → H30-H39 (open PRs in that order).
+- ✅ TASKS.md updated with H30-H39 entries and bitácora.
+- ✅ `dev` clean at `0862b1b` (base for all branches).
+
 ### 2026-06-09 — Sesión H9: Telemetry Webhooks (merge a dev)
 - ✅ PR mergeado a `dev` por el usuario.
 - ✅ Rama `feature/h6-telemetry-webhooks` borrada (local + origin).
@@ -474,6 +607,18 @@ _Ninguno actualmente._
 - ✅ Merge dev → feature/h6-novaquant: 5 conflictos resueltos (api/__init__, ports/__init__, use_cases/__init__, composition.py, main.py). H4-B + H5 integrados.
 - ✅ Validación: pytest 200/201, arch_lint PASS, secret_scan clean.
 - ✅ 1 commit conventional, branch local lista para push + PR.
+
+### 2026-06-11 — Sesión: Merge ARGOS 2.0 Parts II, V, VI → dev
+- ✅ Branch `feature/h13-h22-part-ii` mergeada a `dev` (fast-forward, 8 files).
+- ✅ Branch `feature/h40-h50-part-v` mergeada a `dev` con conflict resolution en `composition.py` (imports duplicados + training use case functions).
+- ✅ Branch `feature/h51-h59-part-vi` mergeada a `dev` con conflict resolution en `composition.py` y `main.py` (7 conflictos, resueltos con superset approach).
+- ✅ Bug fix: `MonitorPositionsUseCase` ahora setea `SL_HIT`/`TP_HIT`/`CLOSED` según el motivo del cierre (antes siempre `CLOSED`).
+- ✅ Bug fix: `_MockExchangeClient` en test añadido `close_partial()`.
+- ✅ Bug fix: Test `test_close_tp_hit` actualizado a `PARTIALLY_CLOSED` (TP1 hace partial close 50%, no full close).
+- ✅ Push a `origin/dev` tras mergear con remote changes (Part II ya mergeada via PR #19).
+- ✅ Ramas `feature/h13-h22-part-ii`, `feature/h40-h50-part-v`, `feature/h51-h59-part-vi` borradas (local + origin).
+- ✅ 462 tests pass, 1 skip. arch_lint PASS. secret_scan clean (solo falsos positivos en skills/).
+- **Próximo**: Docker Compose para integración end-to-end.
 
 ### 2026-06-06 — Sesión de setup
 - ✅ Crash de opencode diagnosticado y resuelto (3 causas: `import.meta.dir`, regex `(?i)`, `execute()` sync).

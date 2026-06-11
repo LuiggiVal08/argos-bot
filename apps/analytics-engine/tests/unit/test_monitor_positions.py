@@ -15,6 +15,9 @@ class _MockExchangeClient:
     async def close_position(self, symbol: str) -> None:
         pass
 
+    async def close_partial(self, symbol: str, amount: Decimal) -> None:
+        pass
+
     async def cancel_all_orders(self) -> int:
         return 0
 
@@ -139,10 +142,11 @@ class TestMonitorPositionsUseCase:
             price_provider=_high_price,
         )
         result = await uc.run()
-        assert result.closed == 1
+        assert result.closed == 0
+        assert result.partial_closes == 1
         assert result.held == 0
         closed = await repo.load("p3")
-        assert closed.status == "TP_HIT"
+        assert closed.status == "PARTIALLY_CLOSED"
 
     async def test_mixed_positions(self, repo):
         await repo.save(LivePosition(

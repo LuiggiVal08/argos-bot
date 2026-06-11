@@ -24,6 +24,9 @@ import structlog
 
 from fastapi import Request
 
+from .application.ports.multi_symbol_consolidator import (
+    MultiSymbolConsolidator,
+)
 from .application.ports.min_lot_provider import (
     MarketConstraints,
     MinLotProvider,
@@ -43,37 +46,79 @@ from .application.ports.drawdown_snapshot_repo import (
 )
 from .application.ports.atr_calculator import AtrCalculator
 from .application.ports.backtest_reporter import BacktestReporter, MetricsCalculator
+from .application.ports.class_balancer import ClassBalancer
+from .application.ports.data_preprocessor import DataPreprocessor
 from .application.ports.execution_logger import ExecutionLogger
+from .application.ports.feature_store import FeatureStore
 from .application.ports.incident_reporter import IncidentReporter
 from .application.ports.notifier import Notifier
 from .application.ports.incident_repository import IncidentRepository
 from .application.ports.position_repository import PositionRepository
 from .application.use_cases.check_drawdown import CheckDrawdownUseCase
+from .application.use_cases.build_dataset import BuildDatasetUseCase
+from .application.use_cases.collect_telemetry import (
+    CollectTelemetryUseCase,
+    RecordTelemetryUseCase,
+)
+from .application.use_cases.compare_champion_challenger import (
+    CompareChampionChallengerUseCase,
+)
+from .application.use_cases.compute_feature_importance import (
+    ComputeFeatureImportanceUseCase,
+)
 from .application.use_cases.compute_position_size import (
     ComputePositionSizeUseCase,
 )
+from .application.use_cases.deploy_shadow import DeployShadowUseCase, ListShadowsUseCase
 from .application.use_cases.execute_signal import ExecuteSignalUseCase
+from .application.use_cases.execution_engine import ExecutionEngine
 from .application.use_cases.list_incidents import ListIncidentsUseCase
+from .application.use_cases.list_model_versions import ListModelVersionsUseCase
 from .application.use_cases.monitor_positions import MonitorPositionsUseCase
 from .application.use_cases.notify_on_event import NotifyOnEventUseCase
 from .application.use_cases.open_day import OpenDayUseCase
 from .application.use_cases.place_order import PlaceOrderUseCase
 from .application.use_cases.predict_signal import PredictSignalUseCase
+from .application.use_cases.promote_model import PromoteModelUseCase
+from .application.use_cases.register_model import RegisterModelUseCase
 from .application.use_cases.report_incident import ReportIncidentUseCase
+from .application.use_cases.report_incident_extended import (
+    GetDisasterStatusUseCase,
+    RecoverFromIncidentUseCase,
+    ReportIncidentExtendedUseCase,
+)
+from .application.use_cases.rollback_model import RollbackModelUseCase
 from .application.use_cases.run_backtest import RunBacktestUseCase
+from .application.use_cases.run_walk_forward import RunWalkForwardUseCase
 from .application.use_cases.train_model import TrainModelUseCase
 from .application.use_cases.trip_circuit_breaker import (
     TripCircuitBreakerUseCase,
 )
+from .application.use_cases.update_dashboard import (
+    GetDashboardHistoryUseCase,
+    GetDashboardUseCase,
+    UpdateDashboardUseCase,
+)
 from .domain.entities.circuit_breaker import CircuitBreaker
+from .domain.entities.champion_challenger import ChampionChallenger
+from .domain.entities.dashboard_engine import DashboardEngine
+from .domain.entities.disaster_recovery import DisasterRecovery
+from .domain.entities.model_registry import ModelRegistry
+from .domain.entities.promotion_engine import PromotionEngine
 from .domain.entities.risk_calculator import RiskCalculator
+from .domain.entities.shadow_model import ShadowModelManager
 from .domain.entities.signal_validator import SignalValidator
+from .domain.entities.telemetry_engine import TelemetryEngine
+from .domain.entities.walk_forward_validator import WalkForwardValidator
 from .infrastructure.balance.ccxt_balance_provider import CcxtBalanceProvider
 from .infrastructure.balance.mock_balance_provider import MockBalanceProvider
 from .infrastructure.env_mode.file_env_mode_writer import (
     FileEnvironmentModeWriter,
 )
 from .infrastructure.exchange.ccxt_order_client import CcxtOrderClient
+from .infrastructure.trading.ccxt_binance_adapter import (
+    CcxtBinanceTestnetAdapter,
+)
 from .domain.value_objects.atr import Atr
 from .infrastructure.indicators.ta_atr_calculator import TaAtrCalculator
 from .infrastructure.backtest.file_reporter import FileBacktestReporter
@@ -89,12 +134,24 @@ from .infrastructure.monitoring.in_memory_incident_repo import (
 from .infrastructure.monitoring.logging_incident_reporter import (
     LoggingIncidentReporter,
 )
+from .infrastructure.data.multi_symbol_consolidator import ParquetMultiSymbolConsolidator
+from .infrastructure.data.feature_store import ParquetFeatureStore
+from .infrastructure.training.class_balancer import WeightedLossBalancer
+from .infrastructure.training.feature_importance_impl import GainFeatureImportanceCalculator
+from .infrastructure.training.model_repo_fs import FileSystemModelRepository
+from .infrastructure.training.walk_forward_runner_impl import SimpleWalkForwardRunner
 from .infrastructure.notification.composite_notifier import (
     CompositeNotifier,
 )
 from .infrastructure.notification.logging_notifier import LoggingNotifier
 from .infrastructure.ohlcv.ccxt_ohlcv_source import ccxt_ohlcv_source
 from .infrastructure.strategies.registry import StrategyDictRegistry
+from .infrastructure.data.multi_symbol_consolidator import ParquetMultiSymbolConsolidator
+from .infrastructure.data.feature_store import ParquetFeatureStore
+from .infrastructure.training.class_balancer import WeightedLossBalancer
+from .infrastructure.training.feature_importance_impl import GainFeatureImportanceCalculator
+from .infrastructure.training.model_repo_fs import FileSystemModelRepository
+from .infrastructure.training.walk_forward_runner_impl import SimpleWalkForwardRunner
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -130,14 +187,41 @@ def _env_mode() -> str:
     return os.environ.get("ENVIRONMENT_MODE", "PAPER_TRADING").upper()
 
 
+def _is_testnet() -> bool:
+    return os.environ.get("BINANCE_TESTNET", "false").lower() == "true"
+
+
+def _build_order_client(exchange: ccxt.Exchange) -> ExchangeOrderClient:
+    """Return the appropriate order client based on testnet mode.
+
+    In testnet mode, uses CcxtBinanceTestnetAdapter (Spot).
+    Otherwise uses CcxtOrderClient (futures)."""
+    if _is_testnet():
+        return CcxtBinanceTestnetAdapter(exchange=exchange)
+    return CcxtOrderClient(exchange=exchange)
+
+
 def _build_exchange() -> ccxt.Exchange:
     """Build a single CCXT exchange instance for the engine.
 
     The exchange id is read from `EXCHANGE_ID` (default: binanceusdm
-    for USDT-margined perpetuals, the canonical venue for H2 testing).
-    Credentials are pulled from env vars; the constructor raises if
-    they're missing in LIVE mode (see spec sad path).
+    for USDT-margined perpetuals). Credentials are pulled from env vars;
+    the constructor raises if they're missing in LIVE mode.
+
+    When BINANCE_TESTNET=true, creates a Binance Spot exchange with
+    sandbox mode enabled, reading BINANCE_TESTNET_API_KEY / _SECRET.
     """
+    if _is_testnet():
+        api_key = os.environ["BINANCE_TESTNET_API_KEY"]
+        api_secret = os.environ["BINANCE_TESTNET_SECRET"]
+        ex: ccxt.Exchange = getattr(ccxt, "binance")({
+            "apiKey": api_key,
+            "secret": api_secret,
+            "enableRateLimit": True,
+        })
+        ex.set_sandbox_mode(True)
+        return ex
+
     ex_id = os.environ.get("EXCHANGE_ID", "binanceusdm")
     klass: Any = getattr(ccxt, ex_id, None)
     if klass is None:
@@ -235,7 +319,7 @@ def _build_h3(
     else:
         if exchange is None:
             raise RuntimeError("exchange is None in non-BACKTESTING mode")
-        order_client = CcxtOrderClient(exchange=exchange)
+        order_client = _build_order_client(exchange)
 
     trip = TripCircuitBreakerUseCase(
         order_client=order_client,
@@ -261,6 +345,13 @@ class _NoopOrderClient(ExchangeOrderClient):
 
     async def close_all_positions(self) -> list[Any]:
         return []
+
+    async def close_position(self, symbol: str) -> Any:
+        from .application.ports.exchange_order_client import PositionSummary
+        return PositionSummary(
+            symbol=symbol, side="long", quantity=Decimal("0"),
+            entry_price=Decimal("0"),
+        )
 
     async def place_composite_order(
         self, order: Any
@@ -329,7 +420,7 @@ def build_composition() -> Composition:
     else:
         if exchange is None:
             raise RuntimeError("exchange is None in non-BACKTESTING mode")
-        order_client_for_placement = CcxtOrderClient(exchange=exchange)
+        order_client_for_placement = _build_order_client(exchange)
     place_order_uc = PlaceOrderUseCase(
         order_client=order_client_for_placement
     )
@@ -422,6 +513,158 @@ def get_notify_on_event_usecase(
     return _comp(request).notify_on_event
 
 
+# Part II — Dataset build use case (cached in app.state) -----------------------
+
+
+def get_build_dataset_usecase(request: Request) -> BuildDatasetUseCase:
+    from .infrastructure.training.data_preprocessor import TaDataPreprocessor
+
+    cached: BuildDatasetUseCase | None = getattr(
+        request.app.state, "build_dataset_usecase", None
+    )
+    if cached is not None:
+        return cached
+
+    consolidator = ParquetMultiSymbolConsolidator()
+    preprocessor = TaDataPreprocessor()
+    feature_store = ParquetFeatureStore()
+    balancer: ClassBalancer = WeightedLossBalancer()
+
+    use_case = BuildDatasetUseCase(
+        consolidator=consolidator,
+        preprocessor=preprocessor,
+        feature_store=feature_store,
+        balancer=balancer,
+    )
+    request.app.state.build_dataset_usecase = use_case
+    return use_case
+
+
+# Part V — Training Engine use cases (cached in app.state) ---------------------
+
+
+_registry: ModelRegistry | None = None
+_shadow_manager: ShadowModelManager | None = None
+_telemetry: TelemetryEngine | None = None
+_disaster_recovery: DisasterRecovery | None = None
+_dashboard: DashboardEngine | None = None
+
+
+def _get_registry() -> ModelRegistry:
+    global _registry
+    if _registry is None:
+        _registry = ModelRegistry()
+    return _registry
+
+
+def _get_shadow_manager() -> ShadowModelManager:
+    global _shadow_manager
+    if _shadow_manager is None:
+        _shadow_manager = ShadowModelManager()
+    return _shadow_manager
+
+
+def _get_telemetry() -> TelemetryEngine:
+    global _telemetry
+    if _telemetry is None:
+        _telemetry = TelemetryEngine()
+    return _telemetry
+
+
+def _get_disaster_recovery() -> DisasterRecovery:
+    global _disaster_recovery
+    if _disaster_recovery is None:
+        _disaster_recovery = DisasterRecovery()
+    return _disaster_recovery
+
+
+def _get_dashboard() -> DashboardEngine:
+    global _dashboard
+    if _dashboard is None:
+        _dashboard = DashboardEngine()
+    return _dashboard
+
+
+def get_register_model_usecase(request: Request) -> RegisterModelUseCase:
+    return RegisterModelUseCase(registry=_get_registry())
+
+
+def get_promote_model_usecase(request: Request) -> PromoteModelUseCase:
+    return PromoteModelUseCase(
+        registry=_get_registry(),
+        promotion_engine=PromotionEngine(),
+    )
+
+
+def get_rollback_model_usecase(request: Request) -> RollbackModelUseCase:
+    return RollbackModelUseCase(registry=_get_registry())
+
+
+def get_list_models_usecase(request: Request) -> ListModelVersionsUseCase:
+    return ListModelVersionsUseCase(registry=_get_registry())
+
+
+def get_compare_champion_challenger_usecase(request: Request) -> CompareChampionChallengerUseCase:
+    return CompareChampionChallengerUseCase(comparator=ChampionChallenger())
+
+
+def get_deploy_shadow_usecase(request: Request) -> DeployShadowUseCase:
+    return DeployShadowUseCase(manager=_get_shadow_manager())
+
+
+def get_list_shadows_usecase(request: Request) -> ListShadowsUseCase:
+    return ListShadowsUseCase(manager=_get_shadow_manager())
+
+
+def get_walk_forward_usecase(request: Request) -> RunWalkForwardUseCase:
+    return RunWalkForwardUseCase(
+        validator=WalkForwardValidator(),
+    )
+
+
+def get_feature_importance_usecase(request: Request) -> ComputeFeatureImportanceUseCase:
+    return ComputeFeatureImportanceUseCase(
+        calculator=GainFeatureImportanceCalculator(),
+    )
+
+
+# Part VI — Observability use cases --------------------------------------------
+
+
+def get_collect_telemetry_usecase(request: Request) -> CollectTelemetryUseCase:
+    return CollectTelemetryUseCase(telemetry=_get_telemetry())
+
+
+def get_record_telemetry_usecase(request: Request) -> RecordTelemetryUseCase:
+    return RecordTelemetryUseCase(telemetry=_get_telemetry())
+
+
+def get_dashboard_usecase(request: Request) -> GetDashboardUseCase:
+    return GetDashboardUseCase(dashboard=_get_dashboard())
+
+
+def get_dashboard_history_usecase(request: Request) -> GetDashboardHistoryUseCase:
+    return GetDashboardHistoryUseCase(dashboard=_get_dashboard())
+
+
+def get_update_dashboard_usecase(request: Request) -> UpdateDashboardUseCase:
+    return UpdateDashboardUseCase(dashboard=_get_dashboard())
+
+
+def get_disaster_status_usecase(request: Request) -> GetDisasterStatusUseCase:
+    return GetDisasterStatusUseCase(recovery=_get_disaster_recovery())
+
+
+def get_report_incident_extended_usecase(
+    request: Request,
+) -> ReportIncidentExtendedUseCase:
+    return ReportIncidentExtendedUseCase(recovery=_get_disaster_recovery())
+
+
+def get_recover_from_incident_usecase(
+    request: Request,
+) -> RecoverFromIncidentUseCase:
+    return RecoverFromIncidentUseCase(recovery=_get_disaster_recovery())
 # H8 — Backtest use cases (cached in app.state) --------------------------------
 
 
@@ -475,17 +718,24 @@ class _ModelUseCases:
     predict: PredictSignalUseCase
 
 
-def get_model_use_cases(request: Request) -> _ModelUseCases:
+async def get_model_use_cases(request: Request) -> _ModelUseCases:
     """Return the NovaQuant model use cases.
 
-    Built once and cached in `app.state.model_use_cases`. Requires
-    TensorFlow for the Keras adapter.
+    Built once and cached in `app.state.model_use_cases`. Uses either
+    PyTorch (USE_PYTORCH=true) or TensorFlow/Keras (default).
+
+    For PyTorch mode:
+      - Expects model files in models/best_argos_lstm.pt and
+        models/scaler_argos.pkl, OR a checkpoint in the
+        FsCheckpointRepository.
+      - The model is loaded once at first call and cached.
     """
     cached: _ModelUseCases | None = getattr(request.app.state, "model_use_cases", None)
     if cached is not None:
         return cached
 
     comp = _comp(request)
+    use_pytorch = os.environ.get("USE_PYTORCH", "false").lower() == "true"
 
     # OHLCV source for training — uses the same exchange as the rest
     if comp.mode == "BACKTESTING":
@@ -499,31 +749,101 @@ def get_model_use_cases(request: Request) -> _ModelUseCases:
     # NovaQuant adapters
     from .infrastructure.training.data_preprocessor import TaDataPreprocessor
     from .infrastructure.training.feature_analyzer_impl import CorrelationFeatureAnalyzer
-    from .infrastructure.models.nova_quant_keras import NovaQuantKerasModel
     from .infrastructure.models.checkpoint_repo_fs import FsCheckpointRepository
 
     preprocessor = TaDataPreprocessor()
     analyzer = CorrelationFeatureAnalyzer()
-    keras_model = NovaQuantKerasModel()
     repo = FsCheckpointRepository()
 
-    train_uc = TrainModelUseCase(
-        ohlcv_source=ohlcv_source,
-        preprocessor=preprocessor,
-        analyzer=analyzer,
-        trainer=keras_model,
-        repo=repo,
-    )
-    predict_uc = PredictSignalUseCase(
-        ohlcv_source=ohlcv_source,
-        preprocessor=preprocessor,
-        predictor=keras_model,
-        repo=repo,
-    )
+    if use_pytorch:
+        from .infrastructure.models.nova_quant_pytorch import NovaQuantPyTorchModel
+        predictor = NovaQuantPyTorchModel()
+        await _load_pytorch_checkpoint(predictor, repo)
+        train_uc = TrainModelUseCase(
+            ohlcv_source=ohlcv_source,
+            preprocessor=preprocessor,
+            analyzer=analyzer,
+            trainer=predictor,
+            repo=repo,
+        )
+        predict_uc = PredictSignalUseCase(
+            ohlcv_source=ohlcv_source,
+            preprocessor=preprocessor,
+            predictor=predictor,
+            repo=repo,
+        )
+    else:
+        from .infrastructure.models.nova_quant_keras import NovaQuantKerasModel
+        keras_model = NovaQuantKerasModel()
+        train_uc = TrainModelUseCase(
+            ohlcv_source=ohlcv_source,
+            preprocessor=preprocessor,
+            analyzer=analyzer,
+            trainer=keras_model,
+            repo=repo,
+        )
+        predict_uc = PredictSignalUseCase(
+            ohlcv_source=ohlcv_source,
+            preprocessor=preprocessor,
+            predictor=keras_model,
+            repo=repo,
+        )
 
     use_cases = _ModelUseCases(train=train_uc, predict=predict_uc)
     request.app.state.model_use_cases = use_cases
     return use_cases
+
+
+async def _load_pytorch_checkpoint(
+    model: Any,
+    repo: Any,
+) -> None:
+    """Carga pesos PyTorch desde checkpoint repo o archivos raw.
+
+    Prioridad:
+      1. Checkpoint repo (load_latest)
+      2. Archivos .pt + .pkl en models/ (fallback para import reciente)
+    """
+    from pathlib import Path
+
+    pt_path = Path("models/best_argos_lstm.pt")
+    scaler_path = Path("models/scaler_argos.pkl")
+
+    # Intentar checkpoint repo primero
+    try:
+        domain_model, weights_bytes = await repo.load_latest()
+        scaler_bytes = _load_scaler_from_repo(repo, domain_model)
+        model.load_weights_from_bytes(
+            pt_bytes=weights_bytes,
+            n_features=len(domain_model.config.features),
+            config=domain_model.config,
+            scaler_bytes=scaler_bytes,
+        )
+        log.info("pytorch_model_loaded_from_checkpoint",
+                 version=domain_model.model_version)
+        return
+    except Exception:
+        log.info("pytorch_checkpoint_not_found_trying_files")
+
+    # Fallback: archivos raw (modelos recien importados de Colab)
+    if pt_path.exists():
+        model.load_checkpoint(pt_path, scaler_path if scaler_path.exists() else None)
+        log.info("pytorch_model_loaded_from_files",
+                 pt=str(pt_path), scaler=str(scaler_path) if scaler_path.exists() else None)
+        return
+
+    log.warning("pytorch_model_not_loaded",
+                hint="place best_argos_lstm.pt in models/ or use import script")
+
+
+def _load_scaler_from_repo(repo: Any, domain_model: Any) -> bytes | None:
+    """Intenta cargar scaler desde el directorio del checkpoint."""
+    from pathlib import Path
+    version = domain_model.model_version
+    scaler_path = repo.base_dir / version / "scaler.pkl"
+    if scaler_path.exists():
+        return scaler_path.read_bytes()
+    return None
 
 
 class _CcxtOhlcvAdapter:
@@ -575,7 +895,7 @@ def get_execute_signal_usecase(request: Request) -> ExecuteSignalUseCase:
             return False
         drawdown_checker = _not_halted
     else:
-        exchange_client = CcxtOrderClient(exchange=comp.exchange)
+        exchange_client = _build_order_client(comp.exchange)
         async def _check_halted() -> bool:
             return comp.check_drawdown.is_halted()
         drawdown_checker = _check_halted
@@ -596,6 +916,61 @@ def get_execute_signal_usecase(request: Request) -> ExecuteSignalUseCase:
     return use_case
 
 
+def get_execution_engine_usecase(request: Request) -> ExecutionEngine:
+    """Return the ExecutionEngine (Signal→Risk→Portfolio→Execute), cached."""
+    cached: ExecutionEngine | None = getattr(
+        request.app.state, "execution_engine_usecase", None
+    )
+    if cached is not None:
+        return cached
+
+    comp = _comp(request)
+
+    from .domain.entities.risk_engine import RiskEngine
+    from .domain.entities.portfolio_manager import PortfolioManager
+    from .domain.entities.position_manager import PositionManager
+
+    validator = SignalValidator()
+
+    if comp.mode == "BACKTESTING":
+        balance_provider: BalanceProvider = MockBalanceProvider(Decimal("10000"))
+        atr_calc: AtrCalculator = _FakeAtrCalculator()
+    else:
+        balance_provider = CcxtBalanceProvider(exchange=comp.exchange)
+        atr_calc = TaAtrCalculator(
+            source=lambda s, t, w: ccxt_ohlcv_source(comp.exchange, s, t, w)
+        )
+
+    if comp.mode == "BACKTESTING":
+        exchange_client: ExchangeOrderClient = _NoopOrderClient()
+        async def _ee_not_halted() -> bool:
+            return False
+        drawdown_checker = _ee_not_halted
+    else:
+        exchange_client = _build_order_client(comp.exchange)
+        async def _ee_check_halted() -> bool:
+            return comp.check_drawdown.is_halted()
+        drawdown_checker = _ee_check_halted
+
+    position_repo = get_position_repo(request)
+    execution_logger = StructlogExecutionLogger()
+
+    engine = ExecutionEngine(
+        signal_validator=validator,
+        balance_provider=balance_provider,
+        atr_calculator=atr_calc,
+        exchange_client=exchange_client,
+        position_repo=position_repo,
+        execution_logger=execution_logger,
+        is_halted=drawdown_checker,
+        risk_engine=RiskEngine(),
+        portfolio_manager=PortfolioManager(),
+        position_manager=PositionManager(),
+    )
+    request.app.state.execution_engine_usecase = engine
+    return engine
+
+
 def get_monitor_positions_usecase(request: Request) -> MonitorPositionsUseCase:
     """Return the MonitorPositionsUseCase, cached in app.state."""
     cached: MonitorPositionsUseCase | None = getattr(
@@ -611,16 +986,20 @@ def get_monitor_positions_usecase(request: Request) -> MonitorPositionsUseCase:
     if comp.mode == "BACKTESTING":
         exchange_client: ExchangeOrderClient = _NoopOrderClient()
     else:
-        exchange_client = CcxtOrderClient(exchange=comp.exchange)
+        exchange_client = _build_order_client(comp.exchange)
 
-    async def _fake_price(symbol: str) -> Decimal:
-        return Decimal("0")
+    if _is_testnet() and hasattr(exchange_client, "get_price"):
+        price_provider = exchange_client.get_price  # type: ignore[union-attr]
+    else:
+        async def _fake_price(symbol: str) -> Decimal:
+            return Decimal("0")
+        price_provider = _fake_price
 
     use_case = MonitorPositionsUseCase(
         position_repo=position_repo,
         exchange_client=exchange_client,
         execution_logger=execution_logger,
-        price_provider=_fake_price,
+        price_provider=price_provider,
     )
     request.app.state.monitor_positions_usecase = use_case
     return use_case
