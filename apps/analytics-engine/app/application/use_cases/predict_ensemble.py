@@ -107,7 +107,7 @@ class PredictEnsembleSignalUseCase:
         limit: int = 200,
         skip_stale_check: bool = False,
     ) -> PredictEnsembleResult:
-        model, _weights = await self._load_model(skip_stale_check)
+        model, _weights = await self._load_model(skip_stale_check, symbol=symbol)
         cfg = model.config
 
         ohlcv = await self._fetch_ohlcv(symbol, timeframe, limit, cfg)
@@ -213,9 +213,9 @@ class PredictEnsembleSignalUseCase:
             metadata=metadata,
         )
 
-    async def _load_model(self, skip_stale_check: bool) -> tuple[NovaQuantModel, bytes]:
+    async def _load_model(self, skip_stale_check: bool, symbol: str = "") -> tuple[NovaQuantModel, bytes]:
         try:
-            model, weights = await self._repo.load_latest()
+            model, weights = await self._repo.load_latest(symbol=symbol)
         except CheckpointNotFoundError as e:
             raise PredictEnsembleError("no_trained_model: train first via POST /training/train-ensemble") from e
 

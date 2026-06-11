@@ -631,3 +631,26 @@ _Ninguno actualmente._
 - ✅ Refactor agnóstico: spec.md §1, §1.2, §4, §6 amendados; AGENTS.md §1, §2 #14, §7, §11 actualizados; config.json migrado a `broker: { kind, url: ${ARGOS_BROKER_URL} }`; `.gitattributes` creado; README "Quick start" dual (Docker + bare metal con WSL2/Memurai); `health_health_check` con detección de deployment model; `docker_docker_*` tools anotados como "uso solo con deploy Docker".
 - ✅ Sección 12 (Git workflow) añadida a AGENTS.md.
 - ✅ Fase 0 ejecutada: `docker-compose.yml` (3 servicios, broker RESP-compatibile con `ARGOS_BROKER_URL`), NestJS data-engine skeleton, FastAPI analytics-engine skeleton. 20 archivos nuevos en `apps/`. Las tools de opencode habían quedado con la versión pre-agnóstica en memoria; parcheé los 4 archivos afectados (`.env.example` × 2, `main.ts`, `docker-compose.yml`) al contenido correcto.
+
+### 2026-06-11 — Sesión: Ensemble pipeline completion
+- ✅ `NovaQuantKerasModel.get_model()` — expone `tf.keras.Model` para MC Dropout
+- ✅ `PredictEnsembleSignalUseCase.regime_detector` — `RuleBasedRegimeDetector` inyectado, reemplaza inline ADX hack
+- ✅ `composition.py` — `get_predict_ensemble_usecase` wired con `MCDropoutUncertaintyEstimator` (opcional, si LSTM cargado) + `RuleBasedRegimeDetector`
+- ✅ `ensemble_training.py` — `log` module-level añadido (bug fix: NameError)
+- ✅ `__init__.py` — `ExecuteTradingSignalUseCase` removido de exports
+- ✅ Tests: 21 nuevos (7 ensemble_training + 14 predict_ensemble), todos los caminos: happy path, meta/calibrator/confidence/uncertainty/regime, sad paths (checkpoint, stale, insufficient data, training failure)
+- ✅ Full test suite: 483 passed, 1 skipped (sin regresiones)
+- ✅ Arch lint PASS, secret_scan clean (solo falsos positivos en skills/)
+- ✅ Branch `feature/h6-h29-ensemble-pipeline-complete` creada desde `dev`, 13 archivos commiteados, push a `origin`
+- 🎯 **Próximo**: el usuario abre PR en GitHub apuntando a `dev`. Pendiente: train real models con datos históricos (validar accuracy > 33%), activar UncertaintyEstimator post-train.
+
+### 2026-06-11 — Sesión: Multi-symbol checkpoint + Colab workflow
+- ✅ `CheckpointRepository` port: `symbol: str = ""` añadido a `load_latest()`, `save()`, `load_version()`, `list_versions()`
+- ✅ `FsCheckpointRepository`: refactorizado a estructura `{base}/{symbol_key}/{version}/` con helper `_symbol_dir()`
+- ✅ `PredictEnsembleSignalUseCase.execute()`: pasa `symbol` a `self._repo.load_latest(symbol=symbol)`
+- ✅ `scripts/export_training_data.py`: CLI para chunked OHLCV fetch (250ms delay, 1000 candles/chunk) + TaDataPreprocessor → Parquet ZIP con manifest.json
+- ✅ `scripts/import_checkpoint.py`: CLI para importar checkpoint ZIP de Colab → FsCheckpointRepository
+- ✅ `notebooks/colab_train_ensemble.ipynb`: notebook Colab con Walk Forward, LSTM GPU, XGBoost, MetaModel, Calibrator, export ZIP
+- ✅ Mock repos en tests actualizados con `symbol: str = ""`
+- ✅ Full test suite: 483 passed, 1 skipped (sin regresiones)
+- 🎯 **Próximo**: exportar datos (6 símbolos, ~1h), subir ZIP a Colab, correr notebook, importar checkpoints, validar pipeline de predicción.

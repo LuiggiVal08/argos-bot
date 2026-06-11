@@ -134,17 +134,17 @@ class _MockCheckpointRepo:
     def __init__(self):
         self.saved = []
 
-    async def save(self, model: NovaQuantModel, weights_bytes: bytes) -> str:
+    async def save(self, model: NovaQuantModel, weights_bytes: bytes, symbol: str = "") -> str:
         self.saved.append((model, weights_bytes))
         return f"checkpoint/{model.model_version}"
 
-    async def load_latest(self):
+    async def load_latest(self, symbol: str = ""):
         raise NotImplementedError
 
-    async def load_version(self, version: str):
+    async def load_version(self, version: str, symbol: str = ""):
         raise NotImplementedError
 
-    async def list_versions(self):
+    async def list_versions(self, symbol: str = ""):
         return []
 
 

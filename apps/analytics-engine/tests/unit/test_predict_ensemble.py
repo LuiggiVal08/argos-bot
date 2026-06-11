@@ -154,7 +154,7 @@ class _MockCheckpointRepo:
         self._model = model
         self._fail = fail
 
-    async def load_latest(self) -> tuple[NovaQuantModel, bytes]:
+    async def load_latest(self, symbol: str = "") -> tuple[NovaQuantModel, bytes]:
         if self._fail:
             from app.application.ports.checkpoint_repository import CheckpointNotFoundError
             raise CheckpointNotFoundError("no_checkpoint")
@@ -162,13 +162,13 @@ class _MockCheckpointRepo:
             self._model = _make_model()
         return self._model, b"mock_weights"
 
-    async def save(self, model, weights):
+    async def save(self, model, weights, symbol: str = ""):
         return "mock_save"
 
-    async def load_version(self, version: str):
+    async def load_version(self, version: str, symbol: str = ""):
         return _make_model(), b"mock_weights"
 
-    async def list_versions(self):
+    async def list_versions(self, symbol: str = ""):
         return ["v1"]
 
 
