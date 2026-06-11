@@ -33,6 +33,9 @@ last_updated: 2026-06-09
 | H7    | Live Execution Engine   | ✅     | 100%   | 9/9    |
 | H8    | Backtesting Engine      | ✅     | 100%   | 9/9    |
 | H9    | Telemetry Webhooks      | ✅     | 100%   | 9/9    |
+| H8–12 | ARGOS 2.0 Data Engine   | ✅     | 100%   | 39/39  |
+| H23–29| ARGOS 2.0 Part III      | ✅     | 100%   | 45/45  |
+| H30–39| ARGOS 2.0 Part IV       | ✅     | 100%   | 25/25  |
 
 ---
 
@@ -336,6 +339,59 @@ _Ninguno actualmente._
 
 ---
 
+## 📊 ARGOS 2.0 — Data Engine (NestJS) — H8–H12
+
+> Candle pipeline, feature calculation, historical events, market replay.
+
+- [x] H8–H12-001 — Domain entities: Candle, FeatureVector, HistoricalEvent
+- [x] H8–H12-002 — Domain VOs: Timeframe, Volume
+- [x] H8–H12-003 — Ports: CandleStore, CandlePublisher, FeatureCalculator, FeaturePublisher, EventStore, HistoricalDataProvider
+- [x] H8–H12-004 — Use cases: BuildCandlesUseCase, CalculateFeaturesUseCase, RecoverCandleUseCase, ReplayMarketUseCase
+- [x] H8–H12-005 — Infrastructure: InMemoryCandleStore, RedisCandlePublisher, RedisFeaturePublisher, FileEventStore
+- [x] H8–H12-006 — CandlePipelineService + FeaturePipelineService
+- [x] H8–H12-007 — 11 pure-TS indicators in TechnicalIndicatorCalculator
+- [x] H8–H12-008 — NestJS module wiring in app.module.ts
+- [x] H8–H12-009 — 73 tests (49 unit domain + 24 integration pipeline)
+
+**Archivos**: 39 files (new + modified) in `apps/data-engine/src/`
+
+---
+
+## 📊 ARGOS 2.0 — Analytics Part III (Model Pipeline) — H23–H29
+
+> NovaQuant model pipeline: features, regime detection, ensemble, meta-model, calibration, uncertainty.
+
+- [x] H23–H29-001 — Domain: MarketContext entity, RegimeType/ScalerType VOs
+- [x] H23–H29-002 — 8 ports: ClassBalancer, ConfidenceFilter, FeatureStore, MetaModel, MultiSymbolConsolidator, ProbabilityCalibrator, RegimeDetector, UncertaintyEstimator
+- [x] H23–H29-003 — Infrastructure: RuleBasedRegimeDetector, NovaQuantXGBoostModel, NovaQuantPyTorchModel, MCDropoutUncertaintyEstimator, SklearnProbabilityCalibrator, XGBoostMetaModel
+- [x] H23–H29-004 — BuildDatasetUseCase with configurable scalers + class balancing
+- [x] H23–H29-005 — Async composition: get_model_use_cases with PyTorch/TF branching
+- [x] H23–H29-006 — 16 indicators including ADX14, BBW
+- [x] H23–H29-007 — 7 test files (ADX, regime detector, meta model, confidence filter, uncertainty estimator, feature extractor, NovaQuant VOs)
+
+**Archivos**: 45 files (33 new + 12 modified) in `apps/analytics-engine/`
+
+---
+
+## 📊 ARGOS 2.0 — Analytics Part IV (Execution Engine) — H30–H39
+
+> Position management, risk engine, portfolio manager, correlation, execution orchestrator.
+
+- [x] H30–H39-001 — Domain: PositionManager (multi-TP/BE/trail/risk_multiple), RiskEngine (5 checks), PortfolioManager (exposure/per-symbol/correlation/heat/position limits), CorrelationEngine (pearson returns)
+- [x] H30–H39-002 — Use cases: ExecutionEngine orchestrator (SignalValidator→CircuitBreaker→RiskEngine→PortfolioManager→sizing→order→log), ExecuteTradingSignalUseCase
+- [x] H30–H39-003 — Ports: ExchangeOrderGateway, ExchangeOrderClient.close_partial()
+- [x] H30–H39-004 — Infrastructure: MockExchangeAdapter
+- [x] H30–H39-005 — LivePosition extended with multi-TP/BE/trail fields
+- [x] H30–H39-006 — PositionTracker enhanced with partial TP + trailing SL
+- [x] H30–H39-007 — MonitorPositionsUseCase refactored to use PositionManager
+- [x] H30–H39-008 — API: POST /execute/engine
+- [x] H30–H39-009 — 7 test files (position manager, risk engine, portfolio manager, correlation, execution engine, execute trading signal, mock adapter)
+- [x] H30–H39-010 — 14 tests for ExecutionEngine
+
+**Archivos**: 25 files (16 new + 9 modified) in `apps/analytics-engine/`
+
+---
+
 ## Bitácora
 
 ### 2026-06-07 — Sesión H5: Secrets & Env Mode
@@ -432,11 +488,16 @@ _Ninguno actualmente._
 - ✅ 20 tests unitarios (get_price, close_position, cancel_all, place_composite, emergency, close_all)
 - ✅ 357/358 pytest pass (1 skipped), arch_lint PASS, secret_scan clean (solo falsos positivos en skills/)
 
-### 2026-06-09 — Release v0.1.0
-- ✅ PR `dev → main` mergeado por el usuario.
-- ✅ Tag `v0.1.0` creado y pusheado a `origin`.
-- **Estado**: 94/94 tareas, 337 tests, arch_lint PASS. MVP completo.
-- **Próximo**: definir roadmap post-MVP.
+### 2026-06-10 — Sesión: ARGOS 2.0 H8–H39 completo + Branch split
+
+- ✅ All 462 tests pass (1 skipped), arch_lint PASS, typecheck PASS, lint PASS.
+- ✅ **Branch 1** (`feature/h8-h12-data-engine`): 39 data-engine files committed, pushed.
+- ✅ **Branch 2** (`feature/h23-h29-part-iii`): 45 analytics-engine files (Part III: NovaQuant model pipeline, regime detection, dataset builder), pushed.
+- ✅ **Branch 3** (`feature/h30-h39-part-iv`): 25 analytics-engine files (Part IV: Execution Engine, Risk Engine, Portfolio Manager, Position Manager, Correlation Engine), pushed.
+- ✅ Shared `__init__.py` files and `composition.py` crafted with correct Part-III/Part-IV-only exports.
+- ✅ Merge order: H8-H12 → H23-H29 → H30-H39 (open PRs in that order).
+- ✅ TASKS.md updated with H30-H39 entries and bitácora.
+- ✅ `dev` clean at `0862b1b` (base for all branches).
 
 ### 2026-06-09 — Sesión H9: Telemetry Webhooks (merge a dev)
 - ✅ PR mergeado a `dev` por el usuario.
