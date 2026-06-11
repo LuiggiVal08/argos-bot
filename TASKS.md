@@ -5,7 +5,7 @@ completed: 94
 in_progress: 0
 blocked: 0
 overall_pct: 100
-last_updated: 2026-06-09
+last_updated: 2026-06-11
 ---
 
 # TASKS — argos-bot
@@ -36,6 +36,9 @@ last_updated: 2026-06-09
 | H8–12 | ARGOS 2.0 Data Engine   | ✅     | 100%   | 39/39  |
 | H23–29| ARGOS 2.0 Part III      | ✅     | 100%   | 45/45  |
 | H30–39| ARGOS 2.0 Part IV       | ✅     | 100%   | 25/25  |
+| H13–22| ARGOS 2.0 Part II        | ✅     | 100%   | 8/8    |
+| H40–50| ARGOS 2.0 Part V         | ✅     | 100%   | 24/24  |
+| H51–59| ARGOS 2.0 Part VI        | ✅     | 100%   | 11/11  |
 
 ---
 
@@ -392,6 +395,58 @@ _Ninguno actualmente._
 
 ---
 
+## 📊 ARGOS 2.0 — Analytics Part II (Dataset & Feature Engine) — H13–H22
+
+> Labeling engine, window builder, normalizer, dataset validator. API endpoint for dataset building.
+
+- [x] H13–H20-001 — Domain: LabelingEngine (ATR-based BUY/SELL/HOLD classification)
+- [x] H13–H20-002 — Domain: WindowBuilder (sliding window config + indices)
+- [x] H13–H20-003 — Domain: Normalizer (Standard/MINMAX/Robust scaling params)
+- [x] H13–H20-004 — Domain: DatasetValidator (schema validation)
+- [x] H13–H20-005 — Ports: MultiSymbolConsolidator, FeatureStore, ClassBalancer, DataPreprocessor
+- [x] H13–H20-006 — Use case: BuildDatasetUseCase (consolidate → preprocess → label → balance → store)
+- [x] H13–H20-007 — API: POST /dataset/build
+- [x] H13–H20-008 — Composition wiring in get_build_dataset_usecase
+
+**Archivos**: 8 files (new + modified) in `apps/analytics-engine/`
+
+---
+
+## 📊 ARGOS 2.0 — Analytics Part V (Training Engine) — H40–H50
+
+> Model registry with versioned champion/challenger, promotion engine with gates, rollback, shadow deployment, walk-forward validation, feature importance.
+
+- [x] H40–H50-001 — Domain: ModelRegistry (versioned + champion/challenger tracking)
+- [x] H40–H50-002 — Domain: PromotionEngine (Sharpe ≥5% improvement, PF ≥3, DD ≤2% increase, WR ≥40%)
+- [x] H40–H50-003 — Domain: RollbackEngine (version rollback safety)
+- [x] H40–H50-004 — Domain: ChampionChallenger (multi-metric comparison)
+- [x] H40–H50-005 — Domain: ShadowModelManager (max 3 shadows, evict after 1000 predictions)
+- [x] H40–H50-006 — Domain: WalkForwardValidator (sliding window CV)
+- [x] H40–H50-007 — Domain: FeatureImportance (gain-based calculator)
+- [x] H40–H50-008 — 9 use cases: register, list, promote, rollback, compare, deploy shadow, list shadows, walk forward, feature importance
+- [x] H40–H50-009 — 8 endpoints under /training/*
+- [x] H40–H50-010 — Infra: FileSystemModelRepository, SimpleWalkForwardRunner, GainFeatureImportanceCalculator
+
+**Archivos**: 24 files (new + modified) in `apps/analytics-engine/`
+
+---
+
+## 📊 ARGOS 2.0 — Analytics Part VI (Observability & Disaster Recovery) — H51–H59
+
+> Telemetry engine, dashboard panels, disaster recovery with auto-mode escalation, centralized structured logging.
+
+- [x] H51–H59-001 — Domain: TelemetryEngine (4-engine metrics collection, 10k point buffer auto-evict)
+- [x] H51–H59-002 — Domain: DashboardEngine (market/AI/risk/training panels)
+- [x] H51–H59-003 — Domain: DisasterRecovery (auto-mode escalation NORMAL→DEGRADED→SAFE→HALTED)
+- [x] H51–H59-004 — Domain: CentralizedLogger (structured log levels + filter)
+- [x] H51–H59-005 — Use cases: CollectTelemetryUseCase, RecordTelemetryUseCase, UpdateDashboardUseCase, GetDashboardUseCase, GetDashboardHistoryUseCase, ReportIncidentExtendedUseCase, GetDisasterStatusUseCase, RecoverFromIncidentUseCase
+- [x] H51–H59-006 — API: /observability/telemetry, /observability/dashboard, /observability/disaster/*
+- [x] H51–H59-007 — Composition wiring for all Part VI use cases
+
+**Archivos**: 11 files (new + modified) in `apps/analytics-engine/`
+
+---
+
 ## Bitácora
 
 ### 2026-06-07 — Sesión H5: Secrets & Env Mode
@@ -552,6 +607,18 @@ _Ninguno actualmente._
 - ✅ Merge dev → feature/h6-novaquant: 5 conflictos resueltos (api/__init__, ports/__init__, use_cases/__init__, composition.py, main.py). H4-B + H5 integrados.
 - ✅ Validación: pytest 200/201, arch_lint PASS, secret_scan clean.
 - ✅ 1 commit conventional, branch local lista para push + PR.
+
+### 2026-06-11 — Sesión: Merge ARGOS 2.0 Parts II, V, VI → dev
+- ✅ Branch `feature/h13-h22-part-ii` mergeada a `dev` (fast-forward, 8 files).
+- ✅ Branch `feature/h40-h50-part-v` mergeada a `dev` con conflict resolution en `composition.py` (imports duplicados + training use case functions).
+- ✅ Branch `feature/h51-h59-part-vi` mergeada a `dev` con conflict resolution en `composition.py` y `main.py` (7 conflictos, resueltos con superset approach).
+- ✅ Bug fix: `MonitorPositionsUseCase` ahora setea `SL_HIT`/`TP_HIT`/`CLOSED` según el motivo del cierre (antes siempre `CLOSED`).
+- ✅ Bug fix: `_MockExchangeClient` en test añadido `close_partial()`.
+- ✅ Bug fix: Test `test_close_tp_hit` actualizado a `PARTIALLY_CLOSED` (TP1 hace partial close 50%, no full close).
+- ✅ Push a `origin/dev` tras mergear con remote changes (Part II ya mergeada via PR #19).
+- ✅ Ramas `feature/h13-h22-part-ii`, `feature/h40-h50-part-v`, `feature/h51-h59-part-vi` borradas (local + origin).
+- ✅ 462 tests pass, 1 skip. arch_lint PASS. secret_scan clean (solo falsos positivos en skills/).
+- **Próximo**: Docker Compose para integración end-to-end.
 
 ### 2026-06-06 — Sesión de setup
 - ✅ Crash de opencode diagnosticado y resuelto (3 causas: `import.meta.dir`, regex `(?i)`, `execute()` sync).
