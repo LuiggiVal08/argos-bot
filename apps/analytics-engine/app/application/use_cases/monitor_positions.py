@@ -119,6 +119,13 @@ class MonitorPositionsUseCase:
                     ) from e
 
                 pnl = pos.compute_pnl_at(price)
+                close_reason = decision.reason
+                if "stop_loss" in close_reason:
+                    close_status = "SL_HIT"
+                elif "tp" in close_reason or "full_close" in close_reason:
+                    close_status = "TP_HIT"
+                else:
+                    close_status = "CLOSED"
                 closed_pos = LivePosition(
                     position_id=pos.position_id,
                     symbol=pos.symbol,
@@ -131,7 +138,7 @@ class MonitorPositionsUseCase:
                     opened_at=pos.opened_at,
                     closed_at=datetime.now(timezone.utc),
                     realized_pnl=pnl,
-                    status="CLOSED",
+                    status=close_status,
                 )
                 await self._position_repo.save(closed_pos)
 
