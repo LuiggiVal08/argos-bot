@@ -20,6 +20,17 @@ from .risk_pct import (
 )
 from .signal_side import SignalSide
 from .trading_signal import TradingSignal
+from .validation_metrics import (
+    BrierScore,
+    CalibrationMetrics,
+    ClassDistribution,
+    ConfusionMetrics,
+    ECE,
+    FeatureImportance,
+    RegimeBreakdown,
+    RegimeMetrics,
+    UncertaintyMetrics,
+)
 
 __all__ = [
     "Atr",
@@ -47,4 +58,13 @@ __all__ = [
     "MAX_RISK_PCT",
     "SignalSide",
     "TradingSignal",
+    "BrierScore",
+    "CalibrationMetrics",
+    "ClassDistribution",
+    "ConfusionMetrics",
+    "ECE",
+    "FeatureImportance",
+    "RegimeBreakdown",
+    "RegimeMetrics",
+    "UncertaintyMetrics",
 ]

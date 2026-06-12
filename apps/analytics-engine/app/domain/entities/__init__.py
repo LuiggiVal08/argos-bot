@@ -36,6 +36,12 @@ from .signal_validator import (
     SignalValidator,
     ValidationResult,
 )
+from .validation_report import (
+    CheckStatus,
+    CheckType,
+    ValidationCheck,
+    ValidationReport,
+)
 
 __all__ = [
     "BacktestEngine",
@@ -66,4 +72,8 @@ __all__ = [
     "RejectionReason",
     "SignalValidator",
     "ValidationResult",
+    "CheckStatus",
+    "CheckType",
+    "ValidationCheck",
+    "ValidationReport",
 ]
