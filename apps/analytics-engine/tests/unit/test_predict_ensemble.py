@@ -24,7 +24,7 @@ from app.domain.value_objects.trading_signal import TradingSignal
 
 # ── Helpers ───────────────────────────────────────────────────────────
 
-N_FEATURES = 19
+N_FEATURES = 20
 DEFAULT_FEATURE_MEANS = tuple(float(i) for i in range(N_FEATURES))
 DEFAULT_FEATURE_STDS = tuple(float(i + 1) for i in range(N_FEATURES))
 

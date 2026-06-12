@@ -20,7 +20,7 @@ from app.domain.value_objects.signal_side import SignalSide
 
 # ── Mock adapters ──────────────────────────────────────────────────────
 
-N_FEATURES = 19  # matches ModelConfig default
+N_FEATURES = 20  # matches ModelConfig default
 
 
 class _MockOhlcvSource:

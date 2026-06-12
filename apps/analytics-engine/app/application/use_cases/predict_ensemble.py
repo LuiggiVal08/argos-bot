@@ -122,7 +122,7 @@ class PredictEnsembleSignalUseCase:
         lstm_probs = self._signal_to_probs(lstm_signal)
         xgb_probs = self._signal_to_probs(xgb_signal)
 
-        market_features = self._extract_market(features_raw)
+        market_features = self._extract_market(features_raw, cfg.features)
         market_context = await self._detect_regime(market_features)
 
         # Step 1: if MetaModel is available, use it for final decision
@@ -284,14 +284,23 @@ class PredictEnsembleSignalUseCase:
         return (buy, sell, hold)
 
     @staticmethod
-    def _extract_market(features_raw: np.ndarray) -> dict[str, float]:
+    def _extract_market(
+        features_raw: np.ndarray, feature_names: tuple[str, ...],
+    ) -> dict[str, float]:
         last = features_raw[-1]
         n = features_raw.shape[1]
-        adx = float(last[15]) if n > 15 else 25.0
-        bbw = float(last[14]) if n > 14 else 0.1
-        atr = float(last[15]) if n > 15 else 100.0
-        volume = float(last[4]) if n > 4 else 1000.0
-        rsi = float(last[5]) if n > 5 else 50.0
+        def _idx(name: str) -> int:
+            return feature_names.index(name)
+
+        bb_u = float(last[_idx('bb_upper')]) if _idx('bb_upper') < n else 0.0
+        bb_m = float(last[_idx('bb_middle')]) if _idx('bb_middle') < n else 1.0
+        bb_l = float(last[_idx('bb_lower')]) if _idx('bb_lower') < n else 0.0
+        bbw = (bb_u - bb_l) / (bb_m + 1e-10)
+
+        adx = float(last[_idx('adx')]) if _idx('adx') < n else 25.0
+        atr = float(last[_idx('atr')]) if _idx('atr') < n else 100.0
+        volume = float(last[_idx('volume')]) if _idx('volume') < n else 1000.0
+        rsi = float(last[_idx('rsi')]) if _idx('rsi') < n else 50.0
         return {"adx": adx, "bbw": bbw, "atr": atr, "volume": volume, "rsi": rsi}
 
     async def _detect_regime(

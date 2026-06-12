@@ -1,9 +1,14 @@
 """Export training data for Colab training.
 
 Usage:
-    python -m scripts.export_training_data \\
-        --symbols BTC/USDT,ETH/USDT,SOL/USDT,XRP/USDT,DOGE/USDT,AVAX/USDT \\
+    python -m scripts.export_training_data \
+        --symbols BTC/USDT,ETH/USDT,SOL/USDT,XRP/USDT,DOGE/USDT,AVAX/USDT \
         --timeframe 5m --years 4 --output data_export.zip
+
+    # Resume after a crash (skips already-processed symbols):
+    python -m scripts.export_training_data \
+        --symbols BTC/USDT,ETH/USDT,SOL/USDT,XRP/USDT,DOGE/USDT,AVAX/USDT \
+        --timeframe 5m --years 4 --output data_export.zip --resume
 
 Fetches OHLCV in chunks of 1000 candles with rate limiting,
 preprocesses features + targets via TaDataPreprocessor,
@@ -14,7 +19,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import time
+import pickle
 import zipfile
 from argparse import ArgumentParser, Namespace
 from datetime import datetime, timezone
@@ -28,8 +33,9 @@ from app.infrastructure.training.data_preprocessor import TaDataPreprocessor
 from app.domain.value_objects.model_config import ModelConfig
 
 CHUNK_SIZE = 1000
-RATE_LIMIT_DELAY = 0.25  # 250ms between chunks
+RATE_LIMIT_DELAY = 0.25
 MINUTES_PER_YEAR = 365 * 24 * 60
+CACHE_DIR = ".export_cache"
 
 
 def _parse_args() -> Namespace:
@@ -39,6 +45,7 @@ def _parse_args() -> Namespace:
     p.add_argument("--years", type=int, default=4, help="Years of history")
     p.add_argument("--output", default="data_export.zip", help="Output ZIP path")
     p.add_argument("--exchange-id", default="binance", help="CCXT exchange id")
+    p.add_argument("--resume", action="store_true", help="Skip already-processed symbols")
     return p.parse_args()
 
 
@@ -60,6 +67,25 @@ def _since_from_years(years: int) -> int:
     now = datetime.now(timezone.utc)
     start = now.replace(year=now.year - years)
     return int(start.timestamp() * 1000)
+
+
+def _cache_path(key: str) -> Path:
+    return Path(CACHE_DIR) / f"{key}.pkl"
+
+
+def _is_cached(key: str) -> bool:
+    return _cache_path(key).is_file()
+
+
+def _save_cache(key: str, data: dict) -> None:
+    Path(CACHE_DIR).mkdir(parents=True, exist_ok=True)
+    with open(_cache_path(key), "wb") as f:
+        pickle.dump(data, f)
+
+
+def _load_cache(key: str) -> dict:
+    with open(_cache_path(key), "rb") as f:
+        return pickle.load(f)
 
 
 async def _fetch_chunked(
@@ -92,7 +118,7 @@ async def _fetch_chunked(
         chunk_num += 1
         print(f"  [{_symbol_to_key(symbol)}] chunk {chunk_num}: "
               f"{len(candles)} candles, total {len(all_candles)} "
-              f"(-> {pd.Timestamp(c[0], unit='ms')})")
+              f"(-> {pd.Timestamp(raw[-1][0], unit='ms')})")
 
         if len(raw) < CHUNK_SIZE:
             break
@@ -107,6 +133,7 @@ async def _process_symbol(
     exchange, symbol: str, timeframe: str, years: int,
     preprocessor: TaDataPreprocessor, cfg: ModelConfig,
 ) -> dict | None:
+    key = _symbol_to_key(symbol)
     print(f"\nFetching {symbol} ({timeframe}, {years}y)...")
     ohlcv = await _fetch_chunked(exchange, symbol, timeframe, years)
 
@@ -119,21 +146,17 @@ async def _process_symbol(
     targets = await preprocessor.create_targets(ohlcv, cfg)
 
     min_len = min(len(features), len(targets))
-    features = features[-min_len:]
+    features_raw = features[-min_len:]
     targets = targets[-min_len:]
 
-    features_norm, means, stds = await preprocessor.normalize(features)
-
-    print(f"  -> {len(features_norm)} samples, {features_norm.shape[1]} features")
+    print(f"  -> {len(features_raw)} samples, {features_raw.shape[1]} features")
     return {
         "symbol": symbol,
-        "features": features_norm,
+        "features": features_raw,
         "targets": targets,
-        "feature_means": list(means),
-        "feature_stds": list(stds),
         "feature_names": list(cfg.features),
-        "n_samples": len(features_norm),
-        "n_features": features_norm.shape[1],
+        "n_samples": len(features_raw),
+        "n_features": features_raw.shape[1],
     }
 
 
@@ -158,6 +181,8 @@ def _write_zip(
         "symbols": [],
     }
 
+    os.makedirs("features", exist_ok=True)
+
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as zf:
         for r in results:
             key = _symbol_to_key(r["symbol"])
@@ -181,13 +206,18 @@ def _write_zip(
                 "key": key,
                 "n_samples": r["n_samples"],
                 "n_features": r["n_features"],
-                "feature_means": r["feature_means"],
-                "feature_stds": r["feature_stds"],
             })
 
         zf.writestr("manifest.json", json.dumps(manifest, indent=2))
 
     print(f"\nExported {len(results)} symbols to {output}")
+
+
+def _clean_output_path(output: str) -> None:
+    out = Path(output)
+    if out.exists():
+        out.unlink()
+        print(f"Removed existing {output}")
 
 
 async def main() -> None:
@@ -200,19 +230,36 @@ async def main() -> None:
     await exchange.load_markets()
     print(f"Connected to {args.exchange_id}, {len(exchange.markets)} markets loaded")
 
+    results = []
+
     try:
-        results = []
         for sym in symbols:
+            key = _symbol_to_key(sym)
+
+            if args.resume and _is_cached(key):
+                print(f"\nLoading cached result for {sym}...")
+                results.append(_load_cache(key))
+                print(f"  -> {results[-1]['n_samples']} samples cached")
+                continue
+
             r = await _process_symbol(
                 exchange, sym, args.timeframe, args.years, preprocessor, cfg,
             )
             if r:
+                _save_cache(key, r)
                 results.append(r)
 
         if results:
+            _clean_output_path(args.output)
             _write_zip(results, args.output, cfg, args.timeframe)
         else:
             print("No data exported (all symbols failed)")
+
+        # Clean cache after successful export
+        if Path(CACHE_DIR).exists():
+            import shutil
+            shutil.rmtree(CACHE_DIR)
+            print("Cache cleaned")
 
     finally:
         await exchange.close()

@@ -42,13 +42,13 @@ class TaDataPreprocessor:
     Implementa el port DataPreprocessor.
     """
 
-    # 19 features en orden estricto del tensor (coincide con dataset de Colab)
+    # 20 features en orden estricto del tensor (coincide con dataset de Colab)
     FEATURE_NAMES: tuple[str, ...] = (
         "open", "high", "low", "close", "volume",
         "rsi", "ema_fast", "ema_medium", "ema_slow",
         "macd", "macd_signal", "macd_hist",
         "bb_upper", "bb_middle", "bb_lower",
-        "atr", "obv", "volume_sma", "pct_change",
+        "atr", "adx", "obv", "volume_sma", "pct_change",
     )
 
     async def build_features(
@@ -114,15 +114,20 @@ class TaDataPreprocessor:
                 ).average_true_range()
             )
 
-            # ── 17: OBV ──────────────────────────────────────────────
+            # ── 17: ADX(14) ──────────────────────────────────────────
+            features.append(
+                ta.trend.ADXIndicator(high, low, close, window=14).adx()
+            )
+
+            # ── 18: OBV ──────────────────────────────────────────────
             features.append(
                 ta.volume.OnBalanceVolumeIndicator(close, volume).on_balance_volume()
             )
 
-            # ── 18: Volume SMA(20) ───────────────────────────────────
+            # ── 19: Volume SMA(20) ───────────────────────────────────
             features.append(volume.rolling(20).mean())
 
-            # ── 19: Price change % ───────────────────────────────────
+            # ── 20: Price change % ───────────────────────────────────
             features.append(close.pct_change() * 100.0)
 
             # Combinar y nombrar columnas

@@ -47,6 +47,7 @@ class EnsembleTrainingError(RuntimeError):
 @dataclass
 class _WindowResult:
     window_idx: int
+    start: int
     lstm_metrics: dict
     xgb_metrics: dict
     oof_lstm: np.ndarray
@@ -54,8 +55,11 @@ class _WindowResult:
     oof_lstm_probs: np.ndarray
     oof_xgb_probs: np.ndarray
     oof_targets: np.ndarray
+    meta_features: np.ndarray
     train_size: int
     val_size: int
+    norm_means: np.ndarray | None = None
+    norm_stds: np.ndarray | None = None
 
 
 @dataclass(frozen=True)
@@ -71,6 +75,8 @@ class EnsembleTrainingResult:
     oof_size: int = 0
     n_features: int = 0
     meta_train_accuracy: float | None = None
+    feature_means: tuple[float, ...] = ()
+    feature_stds: tuple[float, ...] = ()
     trained_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -121,16 +127,20 @@ class EnsembleTrainingUseCase:
         cfg = config or ModelConfig()
 
         ohlcv = await self._fetch_data(symbol, timeframe, limit, cfg)
-        features_raw, targets, means, stds = await self._preprocess(ohlcv, cfg)
+        features_raw, targets = await self._preprocess(ohlcv, cfg)  # raw, unnormalized
         windows = await self._create_windows(features_raw, cfg)
 
         aligned_targets = targets[cfg.lookback - 1:]
         aligned_targets = aligned_targets[:len(windows)]
 
-        window_results = await self._walk_forward(windows, aligned_targets, cfg)
+        feature_indices = {name: i for i, name in enumerate(cfg.features)}
 
-        oof_lstm, oof_xgb, oof_targets_combined, meta_features = await self._build_oof(
-            window_results, features_raw, cfg, aligned_targets, windows
+        window_results = await self._walk_forward(
+            windows, aligned_targets, cfg, features_raw, feature_indices,
+        )
+
+        oof_lstm, oof_xgb, oof_targets_combined, meta_features = self._build_oof(
+            window_results
         )
 
         meta_version, meta_metrics = await self._train_meta(
@@ -141,9 +151,12 @@ class EnsembleTrainingUseCase:
             oof_lstm, oof_xgb, oof_targets_combined, cfg
         )
 
+        # Last window normalisation stats for inference
+        last_wr = window_results[-1]
+
         return EnsembleTrainingResult(
-            lstm_version=window_results[-1].lstm_metrics.get("version", ""),
-            xgb_version=window_results[-1].xgb_metrics.get("version", ""),
+            lstm_version=last_wr.lstm_metrics.get("version", ""),
+            xgb_version=last_wr.xgb_metrics.get("version", ""),
             meta_version=meta_version,
             calibrator_version=calibrator_version,
             n_windows=len(window_results),
@@ -153,6 +166,8 @@ class EnsembleTrainingUseCase:
             oof_size=len(oof_targets_combined),
             n_features=features_raw.shape[1],
             meta_train_accuracy=meta_metrics.get("train_accuracy"),
+            feature_means=tuple(float(m) for m in last_wr.norm_means),
+            feature_stds=tuple(float(s) for s in last_wr.norm_stds),
         )
 
     async def _fetch_data(
@@ -174,7 +189,8 @@ class EnsembleTrainingUseCase:
 
     async def _preprocess(
         self, ohlcv: list[dict], cfg: ModelConfig
-    ) -> tuple[np.ndarray, np.ndarray, tuple[float, ...], tuple[float, ...]]:
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Build raw features and targets (NO global normalisation)."""
         try:
             features_raw = await self._preprocessor.build_features(ohlcv, cfg)
             targets = await self._preprocessor.create_targets(ohlcv, cfg)
@@ -189,15 +205,13 @@ class EnsembleTrainingUseCase:
             correlations = await self._analyzer.compute_correlations(
                 features_raw, targets, cfg.features
             )
-            features_filtered, feature_names = await self._analyzer.filter_features(
+            features_filtered, _feature_names = await self._analyzer.filter_features(
                 features_raw, targets, cfg.features, min_correlation=0.05
             )
         except AnalysisError as e:
             raise EnsembleTrainingError(f"feature_analysis_failed: {e}") from e
 
-        features_norm, means, stds = await self._preprocessor.normalize(features_filtered)
-
-        return features_norm, targets, means, stds
+        return features_filtered, targets
 
     async def _create_windows(
         self, features_norm: np.ndarray, cfg: ModelConfig
@@ -209,7 +223,8 @@ class EnsembleTrainingUseCase:
         return windows
 
     async def _walk_forward(
-        self, windows: np.ndarray, targets: np.ndarray, cfg: ModelConfig
+        self, windows: np.ndarray, targets: np.ndarray, cfg: ModelConfig,
+        features_raw: np.ndarray, feat_idx: dict[str, int],
     ) -> list[_WindowResult]:
         n = len(windows)
         window_size = n // self.N_WINDOWS
@@ -219,18 +234,26 @@ class EnsembleTrainingUseCase:
             start = w * window_size
             end = n if w == self.N_WINDOWS - 1 else (w + 1) * window_size
 
-            w_data = windows[start:end]
+            w_data_raw = windows[start:end]
             w_targets = targets[start:end]
 
-            n_total = len(w_data)
+            n_total = len(w_data_raw)
             n_val = int(n_total * self.WINDOW_VAL_PCT)
             n_train = n_total - n_val
 
-            x_train, y_train = w_data[:n_train], w_targets[:n_train]
-            x_val, y_val = w_data[n_train:], w_targets[n_train:]
+            # Split BEFORE normalisation
+            x_train_raw, y_train = w_data_raw[:n_train], w_targets[:n_train]
+            x_val_raw, y_val = w_data_raw[n_train:], w_targets[n_train:]
 
-            if len(x_train) < cfg.lookback + 10:
+            if len(x_train_raw) < cfg.lookback + 10:
                 continue
+
+            # Per-window z-score: compute from train ONLY
+            w_means = np.mean(x_train_raw, axis=(0, 1))
+            w_stds = np.std(x_train_raw, axis=(0, 1)) + 1e-6
+
+            x_train = (x_train_raw - w_means) / w_stds
+            x_val = (x_val_raw - w_means) / w_stds
 
             try:
                 lstm_metrics = await self._lstm.train(cfg, x_train, y_train, x_val, y_val)
@@ -255,8 +278,18 @@ class EnsembleTrainingUseCase:
                 signal = await self._xgb_predict.predict(x_val[i])
                 xgb_probs_list.append(_signal_to_probs(signal))
 
+            # Meta features: OOF + market context at correct global_idx
+            meta_features_list = []
+            for i in range(len(x_val)):
+                global_idx = start + n_train + i
+                mf = _extract_market_features_by_idx(features_raw, global_idx, feat_idx)
+                mf_arr = [*lstm_probs_list[i], *xgb_probs_list[i], *mf]
+                meta_features_list.append(mf_arr)
+
+            is_last = (w == self.N_WINDOWS - 1)
             results.append(_WindowResult(
                 window_idx=w,
+                start=start,
                 lstm_metrics=lstm_metrics,
                 xgb_metrics=xgb_metrics,
                 oof_lstm=x_val,
@@ -264,8 +297,11 @@ class EnsembleTrainingUseCase:
                 oof_lstm_probs=np.array(lstm_probs_list),
                 oof_xgb_probs=np.array(xgb_probs_list),
                 oof_targets=y_val,
+                meta_features=np.array(meta_features_list),
                 train_size=len(x_train),
                 val_size=len(x_val),
+                norm_means=w_means if is_last else None,
+                norm_stds=w_stds if is_last else None,
             ))
 
         if not results:
@@ -273,37 +309,15 @@ class EnsembleTrainingUseCase:
 
         return results
 
-    async def _build_oof(
-        self,
+    @staticmethod
+    def _build_oof(
         window_results: list[_WindowResult],
-        features_raw: np.ndarray,
-        cfg: ModelConfig,
-        aligned_targets: np.ndarray,
-        windows: np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        oof_lstm_probs_list = []
-        oof_xgb_probs_list = []
-        oof_targets_list = []
-
-        for wr in window_results:
-            oof_lstm_probs_list.append(wr.oof_lstm_probs)
-            oof_xgb_probs_list.append(wr.oof_xgb_probs)
-            oof_targets_list.append(wr.oof_targets)
-
-        oof_lstm = np.concatenate(oof_lstm_probs_list, axis=0) if oof_lstm_probs_list else np.zeros((1, 3))
-        oof_xgb = np.concatenate(oof_xgb_probs_list, axis=0) if oof_xgb_probs_list else np.zeros((1, 3))
-        oof_targets_combined = np.concatenate(oof_targets_list, axis=0) if oof_targets_list else aligned_targets[:10]
-
-        meta_features_list = []
-        n = len(oof_targets_combined)
-        for i in range(n):
-            lstm_p = oof_lstm[i] if i < len(oof_lstm) else np.array([1/3, 1/3, 1/3])
-            xgb_p = oof_xgb[i] if i < len(oof_xgb) else np.array([1/3, 1/3, 1/3])
-            market_feats = _extract_market_features(features_raw, i)
-            meta_features_list.append([*lstm_p, *xgb_p, *market_feats])
-
-        meta_features = np.array(meta_features_list) if meta_features_list else np.zeros((n, 11))
-        return oof_lstm, oof_xgb, oof_targets_combined, meta_features
+        oof_lstm = np.concatenate([wr.oof_lstm_probs for wr in window_results], axis=0)
+        oof_xgb = np.concatenate([wr.oof_xgb_probs for wr in window_results], axis=0)
+        oof_targets = np.concatenate([wr.oof_targets for wr in window_results], axis=0)
+        meta_features = np.concatenate([wr.meta_features for wr in window_results], axis=0)
+        return oof_lstm, oof_xgb, oof_targets, meta_features
 
     async def _train_meta(
         self,
@@ -352,13 +366,25 @@ def _signal_to_probs(signal: TradingSignal) -> tuple[float, float, float]:
     return (buy, sell, hold)
 
 
-def _extract_market_features(features_raw: np.ndarray, idx: int) -> list[float]:
+def _extract_market_features_by_idx(
+    features_raw: np.ndarray, idx: int, feat_idx: dict[str, int],
+) -> list[float]:
+    """Extract market context features using dynamic indices.
+
+    Returns [adx, bbw, atr, rsi, volume] in that order.
+    BBW is computed as (bb_upper - bb_lower) / bb_middle.
+    """
     n = features_raw.shape[1]
     idx_safe = min(idx, features_raw.shape[0] - 1)
     last = features_raw[idx_safe]
-    adx = float(last[15]) if n > 15 else 25.0
-    bbw = float(last[14]) if n > 14 else 0.1
-    atr = float(last[15]) if n > 15 else 100.0
-    volume = float(last[4]) if n > 4 else 1000.0
-    rsi = float(last[5]) if n > 5 else 50.0
+
+    bb_u = float(last[feat_idx['bb_upper']]) if feat_idx['bb_upper'] < n else 0.0
+    bb_m = float(last[feat_idx['bb_middle']]) if feat_idx['bb_middle'] < n else 1.0
+    bb_l = float(last[feat_idx['bb_lower']]) if feat_idx['bb_lower'] < n else 0.0
+    bbw = (bb_u - bb_l) / (bb_m + 1e-10)
+
+    adx = float(last[feat_idx['adx']]) if feat_idx['adx'] < n else 25.0
+    atr = float(last[feat_idx['atr']]) if feat_idx['atr'] < n else 100.0
+    rsi = float(last[feat_idx['rsi']]) if feat_idx['rsi'] < n else 50.0
+    volume = float(last[feat_idx['volume']]) if feat_idx['volume'] < n else 1000.0
     return [adx, bbw, atr, rsi, volume]
