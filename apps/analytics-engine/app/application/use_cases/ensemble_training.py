@@ -33,7 +33,7 @@ from ...domain.value_objects.trading_signal import TradingSignal
 from ..ports.checkpoint_repository import CheckpointRepository
 from ..ports.data_preprocessor import DataPreprocessor, InsufficientDataError, PreprocessingError
 from ..ports.feature_analyzer import AnalysisError, FeatureAnalyzer
-from ..ports.meta_model import MetaModel, MetaModelError, MetaModelTrainError
+from ..ports.meta_model import MetaModel, MetaModelError, MetaModelInput, MetaModelTrainError
 from ..ports.model_predictor import ModelPredictor
 from ..ports.model_trainer import ModelTrainer, TrainingError
 from ..ports.ohlcv_source import OhlcvSource, OhlcvSourceError
@@ -148,15 +148,17 @@ class EnsembleTrainingUseCase:
         )
 
         calibrator_version = await self._train_calibrator(
-            oof_lstm, oof_xgb, oof_targets_combined, cfg
+            meta_features, oof_targets_combined, cfg
         )
 
-        # Last window normalisation stats for inference
-        last_wr = window_results[-1]
+        # Retrain champion on full dataset with single scaler
+        lstm_version, xgb_version, full_means, full_stds = await self._retrain_champion(
+            features_raw, targets, cfg
+        )
 
         return EnsembleTrainingResult(
-            lstm_version=last_wr.lstm_metrics.get("version", ""),
-            xgb_version=last_wr.xgb_metrics.get("version", ""),
+            lstm_version=lstm_version,
+            xgb_version=xgb_version,
             meta_version=meta_version,
             calibrator_version=calibrator_version,
             n_windows=len(window_results),
@@ -166,8 +168,8 @@ class EnsembleTrainingUseCase:
             oof_size=len(oof_targets_combined),
             n_features=features_raw.shape[1],
             meta_train_accuracy=meta_metrics.get("train_accuracy"),
-            feature_means=tuple(float(m) for m in last_wr.norm_means),
-            feature_stds=tuple(float(s) for s in last_wr.norm_stds),
+            feature_means=tuple(float(m) for m in full_means),
+            feature_stds=tuple(float(s) for s in full_stds),
         )
 
     async def _fetch_data(
@@ -335,21 +337,73 @@ class EnsembleTrainingUseCase:
 
     async def _train_calibrator(
         self,
-        oof_lstm: np.ndarray,
-        oof_xgb: np.ndarray,
+        meta_features: np.ndarray,
         targets: np.ndarray,
         cfg: ModelConfig,
     ) -> str | None:
         try:
-            avg_probs = (oof_lstm + oof_xgb) / 2.0
+            meta_probs_list = []
+            for i in range(len(meta_features)):
+                row = meta_features[i]
+                meta_input = MetaModelInput(
+                    lstm_probs=np.array(row[0:3]),
+                    xgb_probs=np.array(row[3:6]),
+                    context={
+                        "adx": float(row[6]),
+                        "bbw": float(row[7]),
+                        "atr": float(row[8]),
+                        "rsi": float(row[9]),
+                        "volume": float(row[10]),
+                    },
+                )
+                meta_probs = await self._meta_model.predict(meta_input)
+                meta_probs_list.append(meta_probs)
+            meta_oof = np.array(meta_probs_list)
             labels = np.argmax(targets, axis=1)
-            await self._calibrator.fit(avg_probs, labels)
+            await self._calibrator.fit(meta_oof, labels)
         except CalibrationError as e:
             log.warning("calibrator_fit_failed", error=str(e))
             return None
         version = f"cal/v1.0.{int(datetime.now(timezone.utc).timestamp())}"
         log.info("calibrator_trained", version=version)
         return version
+
+
+    async def _retrain_champion(
+        self,
+        features_raw: np.ndarray,
+        targets: np.ndarray,
+        cfg: ModelConfig,
+    ) -> tuple[str, str, np.ndarray, np.ndarray]:
+        """Retrain final champion models on full dataset with single scaler.
+
+        After walk-forward OOF generation, this trains the production
+        LSTM and XGBoost on ALL data with a single z-score scaler,
+        eliminating train-serving skew.
+        """
+        full_means = np.mean(features_raw, axis=0)
+        full_stds = np.std(features_raw, axis=0) + 1e-6
+        features_norm = (features_raw - full_means) / full_stds
+
+        full_windows = await self._create_windows(features_norm, cfg)
+        aligned = targets[cfg.lookback - 1:]
+        aligned = aligned[:len(full_windows)]
+
+        n_total = len(full_windows)
+        n_val = int(n_total * self.WINDOW_VAL_PCT)
+        x_train, y_train = full_windows[:-n_val], aligned[:-n_val]
+        x_val, y_val = full_windows[-n_val:], aligned[-n_val:]
+
+        lstm_metrics = await self._lstm.train(cfg, x_train, y_train, x_val, y_val)
+        xgb_metrics = await self._xgb.train(cfg, x_train, y_train, x_val, y_val)
+
+        ts = int(datetime.now(timezone.utc).timestamp())
+        lstm_version = lstm_metrics.get("version", f"lstm-champion/v1.0.{ts}")
+        xgb_version = xgb_metrics.get("version", f"xgb-champion/v1.0.{ts}")
+
+        log.info("champion_retrained", lstm_version=lstm_version, xgb_version=xgb_version)
+
+        return lstm_version, xgb_version, full_means, full_stds
 
 
 def _signal_to_probs(signal: TradingSignal) -> tuple[float, float, float]:

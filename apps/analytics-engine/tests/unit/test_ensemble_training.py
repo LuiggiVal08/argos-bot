@@ -109,6 +109,11 @@ class _MockMetaModel:
     def __init__(self, fail: bool = False):
         self._fail = fail
         self.train_count = 0
+        self.predict_count = 0
+
+    async def predict(self, input_data) -> np.ndarray:
+        self.predict_count += 1
+        return np.array([0.5, 0.25, 0.25], dtype=np.float32)
 
     async def train(self, features: np.ndarray, targets: np.ndarray) -> dict[str, Any]:
         self.train_count += 1
@@ -174,6 +179,8 @@ class TestEnsembleTrainingUseCase:
         assert result.oof_size > 0
         assert result.n_features > 0
         assert result.meta_train_accuracy is not None
+        assert len(result.feature_means) == N_FEATURES
+        assert len(result.feature_stds) == N_FEATURES
 
     async def test_insufficient_data_raises_error(self):
         uc = EnsembleTrainingUseCase(
